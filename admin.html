@@ -173,7 +173,7 @@
 
     <section class="pane" data-pane="igfeed">
       <h2>Instagram Önizlemesi</h2>
-      <p class="desc">Sitedeki Instagram kareleri. Site yayındayken canlı akış "@ades.media" hesabından otomatik çekildiği için buradaki kareler yalnızca <b>yedek</b> olarak kullanılır; canlı akış kapalıysa buradaki görseller görünür. Beğeni/yorum sayısı da düzenlenebilir.</p>
+      <p class="desc">Sitedeki Instagram kareleri. Her kareye <b>paylaşım linki</b> girersen site o gönderinin görselini otomatik çeker (link alanı yeterli, görsel URL'si gerekmez). "Yedek görsel URL" yalnızca link çözülemezse kullanılır. Beğeni/yorum sayılarını boş bırakırsan otomatik veriler gelmez, o zaman rakamları elle yaz.</p>
       <div class="card" id="igCard"></div>
       <div class="add-bar"><button class="primary" id="igAdd">+ Kare Ekle</button></div>
     </section>
@@ -525,11 +525,12 @@
   function renderIg(){
     listItem($('igCard'), 'igfeed',
       [
-        {key:'image',label:'Görsel',type:'image',full:true},
-        {key:'likes',label:'Beğeni'},
-        {key:'comments',label:'Yorum'}
+        {key:'link',label:'Instagram paylaşım linki (görseli otomatik çekilir)',full:true},
+        {key:'image',label:'Yedek görsel URL (link çalışmazsa)',type:'image',full:true},
+        {key:'likes',label:'Beğeni (opsiyonel)'},
+        {key:'comments',label:'Yorum (opsiyonel)'}
       ],
-      function(it, i){ return 'Kare ' + (i+1); });
+      function(it, i){ return 'Kare ' + (i+1) + (it.link ? ' — bağlı' : ''); });
   }
 
   function renderBlog(){
@@ -643,7 +644,7 @@
     renderAll();
   }
   $('galleryAdd').addEventListener('click', function(){ addItem('gallery', {image:'',title:'',meta:'',category:'',size:''}); toast('Galeriye boş görsel eklendi — bilgileri doldur.'); });
-  $('igAdd').addEventListener('click', function(){ addItem('igfeed', {image:'',likes:'0',comments:'0'}); });
+  $('igAdd').addEventListener('click', function(){ addItem('igfeed', {link:'',image:'',likes:'',comments:''}); toast('Kare eklendi — Instagram paylaşım linkini yapıştır.'); });
   $('blogAdd').addEventListener('click', function(){ addItem('blog', {image:'',tag:'',date:'',title:'',excerpt:'',link:'#'}); });
   $('teamAdd').addEventListener('click', function(){ addItem('team', {image:'',name:'',role:'',instagram:''}); });
   $('testiAdd').addEventListener('click', function(){ addItem('testimonials', {quote:'',title:''}); });

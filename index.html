@@ -2257,15 +2257,21 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       blogGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
     }
 
-    // INSTAGRAM FEED
+    // INSTAGRAM FEED (statik yedek — canlı akış /api/igfeed üzerinden gelir)
     const igGrid = document.getElementById('igGrid');
     if(igGrid && Array.isArray(data.igfeed)){
-      igGrid.innerHTML = data.igfeed.map(g=>`
-        <div class="ig-post wipe">
-          <img loading="lazy" src="${escapeHtml(g.image)}" alt="Instagram gönderisi">
-          <div class="ig-overlay"><span class="ig-stat">♥ ${escapeHtml(g.likes||'0')}</span><span class="ig-stat">💬 ${escapeHtml(g.comments||'0')}</span></div>
-        </div>`).join('');
-      igGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
+      const fallback = data.igfeed.filter(g=> g && g.image && String(g.image).trim());
+      if(fallback.length){
+        igGrid.innerHTML = fallback.map(g=>{
+          const link = (g.link && String(g.link).trim()) || '';
+          const inner = `<img loading="lazy" src="${escapeHtml(g.image)}" alt="Instagram gönderisi">
+          <div class="ig-overlay"><span class="ig-stat">♥ ${escapeHtml(g.likes||'0')}</span><span class="ig-stat">💬 ${escapeHtml(g.comments||'0')}</span></div>`;
+          return link
+            ? `<a class="ig-post wipe" href="${escapeHtml(link)}" target="_blank" rel="noopener">${inner}</a>`
+            : `<div class="ig-post wipe">${inner}</div>`;
+        }).join('');
+        igGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
+      }
     }
 
     // PARTNERLER (kayan şerit)
@@ -2297,11 +2303,16 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       const igGrid = document.getElementById('igGrid');
       const baseUrl = 'https://instagram.com/' + encodeURIComponent(insta);
       const posts = j.posts.slice(0, 6);
-      igGrid.innerHTML = posts.map(p=>`
-        <a class="ig-post wipe" href="${escapeHtml(p.url||baseUrl)}" target="_blank" rel="noopener">
+      igGrid.innerHTML = posts.map(p=>{
+        const hasStats = (p.likes || p.comments);
+        const overlay = hasStats
+          ? `<div class="ig-overlay"><span class="ig-stat">♥ ${formatCount(p.likes)}</span><span class="ig-stat">💬 ${formatCount(p.comments)}</span></div>`
+          : '';
+        return `<a class="ig-post wipe" href="${escapeHtml(p.url||baseUrl)}" target="_blank" rel="noopener">
           <img loading="lazy" src="${escapeHtml(p.thumb||p.image)}" alt="Instagram gönderisi">
-          <div class="ig-overlay"><span class="ig-stat">♥ ${formatCount(p.likes)}</span><span class="ig-stat">💬 ${formatCount(p.comments)}</span></div>
-        </a>`).join('');
+          ${overlay}
+        </a>`;
+      }).join('');
       igGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
       console.info('Instagram canlı akış yüklendi ('+j.source+').');
     }catch(err){

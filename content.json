@@ -16,37 +16,47 @@
     "testiTitle": "Sahne bizi tanıyor",
     "covers": {
       "hero": "https://i.imgur.com/DpyJB6C.png",
-      "about": "sda"
+      "about": ""
     },
     "stats": [
-      {
-        "value": "ÇOK YAKINDA",
-        "label": "Etkinlik"
-      },
-      {
-        "value": "ÇOK YAKINDA",
-        "label": "Şehir"
-      },
-      {
-        "value": "ÇOK YAKINDA",
-        "label": "Festival Ortaklığı"
-      },
-      {
-        "value": "ÇOK YAKINDA",
-        "label": "Ekip Üyesi"
-      }
+      { "value": "ÇOK YAKINDA", "label": "Etkinlik" },
+      { "value": "ÇOK YAKINDA", "label": "Şehir" },
+      { "value": "ÇOK YAKINDA", "label": "Festival Ortaklığı" },
+      { "value": "ÇOK YAKINDA", "label": "Ekip Üyesi" }
     ]
   },
-  "gallery": [],
-  "team": [],
-  "testimonials": [],
-  "partners": [],
-  "blog": [],
+  "gallery": [
+    { "image": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=900&auto=format&fit=crop", "title": "Sahne Işıkları", "meta": "Konser", "category": "Konser", "size": "wide" },
+    { "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=900&auto=format&fit=crop", "title": "Kalabalık", "meta": "Festival", "category": "Festival" },
+    { "image": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=900&auto=format&fit=crop", "title": "Backstage", "meta": "Kamera Arkası", "category": "Backstage", "size": "tall" },
+    { "image": "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=900&auto=format&fit=crop", "title": "Canlı Performans", "meta": "Konser", "category": "Konser" },
+    { "image": "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?q=80&w=900&auto=format&fit=crop", "title": "Etkinlik Alanı", "meta": "Organizasyon", "category": "Organizasyon" },
+    { "image": "https://images.unsplash.com/photo-1508973379184-7517410fb0bc?q=80&w=900&auto=format&fit=crop", "title": "Konferans Salonu", "meta": "Konferans", "category": "Konferans", "size": "wide" }
+  ],
+  "team": [
+    { "image": "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=500&auto=format&fit=crop", "name": "Örnek İsim", "role": "Yönetmen", "instagram": "ornek_kullanici" },
+    { "image": "https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?q=80&w=500&auto=format&fit=crop", "name": "Örnek İsim", "role": "Fotoğrafçı", "instagram": "ornek_kullanici" },
+    { "image": "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=500&auto=format&fit=crop", "name": "Örnek İsim", "role": "Kurgu & Montaj", "instagram": "ornek_kullanici" },
+    { "image": "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=500&auto=format&fit=crop", "name": "Örnek İsim", "role": "Sosyal Medya", "instagram": "ornek_kullanici" }
+  ],
+  "testimonials": [
+    { "quote": "Sahnedeki enerjiyi tam anlamıyla kadraja alıyorlar. Her kare kullanılabilir şekilde ve beklentimizin çok üzerinde kalitede geldi.", "title": "Organizasyon Ekibi" },
+    { "quote": "Geri dönüşleri çok hızlı, sonuç kusursuz. Etkinliğimizin tamamını adeta yeniden yaşattılar. Gönül rahatlığıyla öneriyoruz.", "title": "Mekan Yönetimi" },
+    { "quote": "İletişimleri akıcı, ekip gayet profesyoneldi. Ortaya çıkan görseller hem bizi hem misafirlerimizi büyükledi.", "title": "Festival Organizatörü" }
+  ],
+  "partners": [
+    { "name": "ADES" }, { "name": "ADES" }, { "name": "ADES" },
+    { "name": "ADES" }, { "name": "ADES" }, { "name": "ADES" }
+  ],
+  "blog": [
+    { "image": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=800&auto=format&fit=crop", "tag": "Festival", "date": "12 Temmuz 2026", "title": "Nefes Festival'de üç gün, altı sahne", "excerpt": "Bu yıl festivalin ana ve yan sahnelerinde çektiğimiz kareler ve sahne arkasından notlar.", "link": "#" }
+  ],
   "igfeed": [
-    {
-      "image": "",
-      "likes": "0",
-      "comments": "0"
-    }
+    { "link": "", "image": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=500&auto=format&fit=crop", "likes": "", "comments": "" },
+    { "link": "", "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=500&auto=format&fit=crop", "likes": "", "comments": "" },
+    { "link": "", "image": "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?q=80&w=500&auto=format&fit=crop", "likes": "", "comments": "" },
+    { "link": "", "image": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=500&auto=format&fit=crop", "likes": "", "comments": "" },
+    { "link": "", "image": "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=500&auto=format&fit=crop", "likes": "", "comments": "" },
+    { "link": "", "image": "https://images.unsplash.com/photo-1571266028243-d220c9c3b31c?q=80&w=500&auto=format&fit=crop", "likes": "", "comments": "" }
   ]
 }
