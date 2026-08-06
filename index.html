@@ -2006,8 +2006,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   const revealEls = document.querySelectorAll('.reveal');
   const io = new IntersectionObserver((entries)=>{
     entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target);} });
-  }),
-  {threshold:0.18});
+  }, {threshold:0.18});
   revealEls.forEach(el=>io.observe(el));
 
   // counters
