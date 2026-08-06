@@ -552,7 +552,9 @@
       [
         {key:'image',label:'Fotoğraf',type:'image',full:true},
         {key:'name',label:'İsim'},
-        {key:'role',label:'Görev'},
+        {key:'rank',label:'Seviye',type:'select',options:['','Lider','Başkan','Üye']},
+        {key:'group',label:'Bölüm',type:'select',options:['','Design&IT','Press','IT']},
+        {key:'role',label:'Görev / Ünvan'},
         {key:'instagram',label:'Instagram kullanıcı adı'}
       ],
       function(it){ return it.name || 'Üye'; });
@@ -655,7 +657,7 @@
   $('galleryAdd').addEventListener('click', function(){ addItem('gallery', {image:'',title:'',meta:'',category:'',size:''}); toast('Galeriye boş görsel eklendi — bilgileri doldur.'); });
   $('igAdd').addEventListener('click', function(){ addItem('igfeed', {link:'',image:'',likes:'',comments:''}); toast('Kare eklendi — Instagram paylaşım linkini yapıştır.'); });
   $('blogAdd').addEventListener('click', function(){ addItem('blog', {image:'',tag:'',date:'',title:'',excerpt:'',link:'#'}); });
-  $('teamAdd').addEventListener('click', function(){ addItem('team', {image:'',name:'',role:'',instagram:''}); });
+  $('teamAdd').addEventListener('click', function(){ addItem('team', {image:'',name:'',rank:'Üye',group:'Design&IT',role:'',instagram:''}); });
   $('testiAdd').addEventListener('click', function(){ addItem('testimonials', {quote:'',title:''}); });
   $('partnerAdd').addEventListener('click', function(){ addItem('partners', {name:''}); });
   $('statAdd').addEventListener('click', function(){ addItem('config.stats', {value:'',label:''}); });
