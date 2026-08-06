@@ -1342,9 +1342,11 @@ document.querySelectorAll(".glitch-text").forEach(el => {
 
 <!-- ================================================================
      İÇERİK: INSTAGRAM FEED ÖNİZLEMESİ
-     Aşağıdaki 6 kare gönderiyi, gerçek Instagram gönderi görselleriyle
-     ve beğeni/yorum sayılarıyla değiştir. "@ades.media" hesabına link
-     "ig-follow" butonunda ve içindeki span'de.
+     Aşağıdaki yedek kareler yalnızca canlı akış çalışmadığında görünür.
+     Site yayındayken /api/igfeed (Cloudflare Pages Function) @ades.media
+     hesabının gerçek gönderilerini otomatik çeker ve buraya yazar
+     (beğeni/yorum sayısı ve gönderi bağlantısı dahil).
+     "ig-follow" butonu "@ades.media" hesabına bağlı.
      ================================================================ -->
 <section class="igfeed" id="instagram">
   <div class="wrap">
@@ -1722,9 +1724,10 @@ document.querySelectorAll(".glitch-text").forEach(el => {
 
 <!-- ================================================================
      CANLI DESTEK / AI SOHBET WIDGET'I
-     Bu widget şu an basit, yerel (sahte) örnek yanıtlarla çalışıyor —
-     gerçek bir yapay zekaya veya canlı bir temsilciye bağlamak için
-     script içindeki "CHAT_CONFIG" ve "getBotReply()" kısmını güncelle.
+     Asistan gerçek bir AI üzerinden (Pollinations) her soruya yanıt
+     verir; "selam/naber/fiyat/katılım" gibi durumlarda da hazır yanıt
+     yedeği bulunur. Bağlantı kesilirse otomatik olarak yedek yanıtlara
+     geçer — script içindeki "getAIReply" ve "getBotReply" kısımları.
      ================================================================ -->
 <button class="chat-toggle" id="chatToggle" aria-label="Canlı destek sohbetini aç">
   <span class="chat-toggle-icon">
@@ -2274,6 +2277,39 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   }
   loadDynamicContent();
 
+  // ---------- CANLI INSTAGRAM AKIŞI (otomatik) ----------
+  // /api/igfeed (Cloudflare Pages Function) üzerinden gerçek Instagram
+  // gönderilerini çeker. Başarısız olursa content.json'daki statik yedek
+  // kareler görüntülenir — böylece site asla boş görünmez.
+  function formatCount(n){
+    n = Number(n) || 0;
+    if(n >= 1000000) return (n/1000000).toFixed(1).replace('.',',') + 'M';
+    if(n >= 1000) return (n/1000).toFixed(1).replace('.',',') + 'B';
+    return String(n);
+  }
+  async function loadLiveIG(){
+    const insta = (SITE_CONFIG && SITE_CONFIG.instagram) || 'ades.media';
+    try{
+      const res = await fetch('/api/igfeed?username='+encodeURIComponent(insta), {cache:'no-store'});
+      if(!res.ok) throw new Error('ig api '+res.status);
+      const j = await res.json();
+      if(!j.ok || !Array.isArray(j.posts) || !j.posts.length) throw new Error('ig veri yok');
+      const igGrid = document.getElementById('igGrid');
+      const baseUrl = 'https://instagram.com/' + encodeURIComponent(insta);
+      const posts = j.posts.slice(0, 6);
+      igGrid.innerHTML = posts.map(p=>`
+        <a class="ig-post wipe" href="${escapeHtml(p.url||baseUrl)}" target="_blank" rel="noopener">
+          <img loading="lazy" src="${escapeHtml(p.thumb||p.image)}" alt="Instagram gönderisi">
+          <div class="ig-overlay"><span class="ig-stat">♥ ${formatCount(p.likes)}</span><span class="ig-stat">💬 ${formatCount(p.comments)}</span></div>
+        </a>`).join('');
+      igGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
+      console.info('Instagram canlı akış yüklendi ('+j.source+').');
+    }catch(err){
+      console.warn('Canlı Instagram yüklenemedi, statik içerik gösteriliyor.', err);
+    }
+  }
+  loadLiveIG();
+
 
   // ---------- interactive multi-step apply form ----------
   const form = document.getElementById('applyForm');
@@ -2422,9 +2458,8 @@ document.querySelectorAll(".glitch-text").forEach(el => {
 
   // ======================================================================
   // CANLI DESTEK / AI SOHBET WIDGET'I — mantık
-  // Şu an sahte (yerel) örnek yanıtlarla çalışıyor, gerçek bir insan
-  // temsilciye ya da AI servisine (ör. Anthropic API) bağlamak için
-  // "getBotReply" fonksiyonunu kendi backend/API çağrınla değiştir.
+  // Yanıtlar önce gerçek AI'dan (getAIReply) üretilir; ağ hatası/limit
+  // olursa hazır yanıt motoruna (getBotReply) otomatik düşer.
   // ======================================================================
   const chatToggle = document.getElementById('chatToggle');
   const chatPanel = document.getElementById('chatPanel');
@@ -2461,7 +2496,38 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     return t;
   }
 
-  // ÖRNEK / YEDEK YANIT MOTORU — kendi AI/backend entegrasyonunla değiştir
+  // ==============================================================
+  // GERÇEK AI (varsayılan) — ücretsiz Pollinations üzerinden her soruya
+  // gerçek yanıt üretir; "selam/naber/nasılsın" gibi sohbetlere de karşılık verir.
+  // Ağ/limit hatası olursa aşağıdaki klavye tabanlı HAZIR yanıtlara düşer.
+  // ==============================================================
+  async function getAIReply(msg){
+    const brand =
+      'Sen "ADES Asistan"sın ve ADES Medya web sitesinin yardım botusun. ' +
+      'ADES Medya; Ankara merkezli, konser / festival / etkinlik / konferans ' +
+      'fotoğraf-video çekimi ile sosyal medya içerik üretimi yapan bir ekiptir. ' +
+      'İletişim: ' + SITE_CONFIG.contactEmail + ', +90 ' + SITE_CONFIG.phone +
+      ', Instagram @' + SITE_CONFIG.instagram + '. Sitede "Paketler" (Tekli Etkinlik, ' +
+      'Festival Paketi, Sezonluk Ortaklık), "Galeri" ve "Ekibe Katıl" bölümleri bulunur. ' +
+      'Ziyaretçiye kısa (2-3 cümle), samimi ve Türkçe cevap ver; selam, nasılsın, naber gibi ' +
+      'genel sohbetlere de doğal karşılık ver ve gereksiz uzatma. Ziyaretçinin mesajı: ' + msg;
+    const res = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: brand }],
+        temperature: 0.7,
+        max_tokens: 200
+      })
+    });
+    if(!res.ok) throw new Error('AI HTTP ' + res.status);
+    const text = await res.text();
+    const clean = (text || '').trim();
+    if(!clean) throw new Error('AI boş yanıt');
+    return clean;
+  }
+
+  // HAZIR / YEDEK YANIT MOTORU — AI çalışmazsa kullanılır
   function getBotReply(msg){
     const m = msg.toLowerCase();
     if(m.includes('fiyat') || m.includes('ücret') || m.includes('paket')){
@@ -2479,16 +2545,21 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     return 'Bu konuda sana en doğru bilgiyi ekibimiz verebilir — mesajını aldık, kısa süre içinde dönüş yapacağız. İstersen "Ekibe Katıl" formundan da bize ulaşabilirsin.';
   }
 
-  function handleChatSubmit(text){
+  async function handleChatSubmit(text){
     const clean = text.trim();
     if(!clean) return;
     addChatMsg(clean, 'user');
     chatInput.value = '';
     const typing = showTyping();
-    setTimeout(()=>{
-      typing.remove();
-      addChatMsg(getBotReply(clean), 'bot');
-    }, 650 + Math.random()*500);
+    let reply;
+    try{
+      reply = await getAIReply(clean);
+    }catch(err){
+      console.warn('AI yanıt veremedi, hazır yanıt kullanıldı.', err);
+      reply = getBotReply(clean);
+    }
+    typing.remove();
+    addChatMsg(reply, 'bot');
   }
 
   chatForm?.addEventListener('submit', (e)=>{
