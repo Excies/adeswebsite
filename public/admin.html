@@ -587,25 +587,33 @@
   }
 
   // -- init data --
+  // Önce CANLI content.json'u çek (sitede ne varsa onu göster).
+  // Yerel autosave (localStorage) yalnızca kaydedilmemiş düzenlemeleri
+  // örtüşmeyen alanlar için üstüne uygular. Böylece panel her zaman günceldir.
   function init(){
-    var saved = localStorage.getItem(LS_DATA);
-    if(saved){
-      try{ data = mergeDeep(JSON.parse(saved), JSON.parse(JSON.stringify(DEFAULTS))); }
-      catch(e){ data = JSON.parse(JSON.stringify(DEFAULTS)); }
-      renderAll();
-      toast('Son kaydettiğin içerik yüklendi.');
-      return;
-    }
     fetch('content.json', {cache:'no-store'}).then(function(r){
       if(!r.ok) throw new Error('yok');
       return r.json();
     }).then(function(j){
       data = mergeDeep(j, JSON.parse(JSON.stringify(DEFAULTS)));
+      // localStorage'daki "kaydedilmemiş" düzenlemeleri en yeni canlı içerik üzerine bindir
+      var saved = localStorage.getItem(LS_DATA);
+      if(saved){
+        try{
+          var edit = JSON.parse(saved);
+          data = mergeDeep(data, edit);
+          toast('Canlı içerik + yerel düzenlemeler yüklendi.');
+        }catch(e){ /* geçersiz autosave: yok say */ }
+      }
       renderAll();
     }).catch(function(){
-      data = JSON.parse(JSON.stringify(DEFAULTS));
+      // Sunucu yoksa yerel yedeğe düş
+      var saved = localStorage.getItem(LS_DATA);
+      try{
+        data = mergeDeep(saved ? JSON.parse(saved) : {}, JSON.parse(JSON.stringify(DEFAULTS)));
+      }catch(e){ data = JSON.parse(JSON.stringify(DEFAULTS)); }
       renderAll();
-      toast('content.json bulunamadı — varsayılan içerik yüklendi.');
+      toast('content.json çekilemedi — yerel kopya yüklendi.');
     });
   }
 
