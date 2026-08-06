@@ -4,36 +4,36 @@
     "phone": "546 655 52 27",
     "instagram": "ades.media",
     "city": "Ankara",
-    "heroTag": "ANKARA MERKEZLİ",
-    "heroDesc": "Konserlerin, etkinliklerin, konferansların sonsuz olmasını sağlayan bir ekibiz. Herkese, herkes için.",
+    "heroTag": "ANKARA MERKEZLÄ°",
+    "heroDesc": "Konserlerin, etkinliklerin, konferanslarÄ±n sonsuz olmasÄ±nÄ± saÄŸlayan bir ekibiz. Herkese, herkes iÃ§in.",
     "aboutTitle": "Biz kimiz?",
-    "aboutText1": "ADES Medya, markalar, kurumlar ve organizasyonlar için yaratıcı medya ve dijital çözümler üreten bir ajanstır. Fotoğraf ve video prodüksiyonu, sosyal medya içerikleri, grafik tasarım, web tasarımı ve marka yönetimi gibi birçok alanda profesyonel hizmet sunuyor, her projeyi özgün bir bakış açısıyla hayata geçiriyoruz.",
-    "aboutText2": "Konferanslardan kurumsal etkinliklere, MUN organizasyonlarından bireysel projelere kadar farklı ölçekte çalışmalar gerçekleştiriyor; kaliteli içerik, yaratıcı fikirler ve güçlü görsel deneyimlerle markaların hikâyelerini etkili bir şekilde anlatmalarına yardımcı oluyoruz.",
+    "aboutText1": "ADES Medya, markalar, kurumlar ve organizasyonlar iÃ§in yaratÄ±cÄ± medya ve dijital Ã§Ã¶zÃ¼mler Ã¼reten bir ajanstÄ±r. FotoÄŸraf ve video prodÃ¼ksiyonu, sosyal medya iÃ§erikleri, grafik tasarÄ±m, web tasarÄ±mÄ± ve marka yÃ¶netimi gibi birÃ§ok alanda profesyonel hizmet sunuyor, her projeyi Ã¶zgÃ¼n bir bakÄ±ÅŸ aÃ§Ä±sÄ±yla hayata geÃ§iriyoruz.",
+    "aboutText2": "Konferanslardan kurumsal etkinliklere, MUN organizasyonlarÄ±ndan bireysel projelere kadar farklÄ± Ã¶lÃ§ekte Ã§alÄ±ÅŸmalar gerÃ§ekleÅŸtiriyor; kaliteli iÃ§erik, yaratÄ±cÄ± fikirler ve gÃ¼Ã§lÃ¼ gÃ¶rsel deneyimlerle markalarÄ±n hikÃ¢yelerini etkili bir ÅŸekilde anlatmalarÄ±na yardÄ±mcÄ± oluyoruz.",
     "galleryTitle": "Alandan kareler",
-    "teamTitle": "Objektifin arkasındakiler",
-    "blogTitle": "Sahne notları",
-    "testiEyebrow": "Organizatörler Ne Diyor",
-    "testiTitle": "Sahne bizi tanıyor",
+    "teamTitle": "Objektifin arkasÄ±ndakiler",
+    "blogTitle": "Sahne notlarÄ±",
+    "testiEyebrow": "OrganizatÃ¶rler Ne Diyor",
+    "testiTitle": "Sahne bizi tanÄ±yor",
     "covers": {
       "hero": "https://i.imgur.com/DpyJB6C.png",
       "about": "https://i.imgur.com/i5EWDWP.jpeg"
     },
     "stats": [
       {
-        "value": "ÇOK YAKINDA",
+        "value": "Ã‡OK YAKINDA",
         "label": "Etkinlik"
       },
       {
-        "value": "ÇOK YAKINDA",
-        "label": "Şehir"
+        "value": "Ã‡OK YAKINDA",
+        "label": "Åehir"
       },
       {
-        "value": "ÇOK YAKINDA",
-        "label": "Festival Ortaklığı"
+        "value": "Ã‡OK YAKINDA",
+        "label": "Festival OrtaklÄ±ÄŸÄ±"
       },
       {
-        "value": "ÇOK YAKINDA",
-        "label": "Ekip Üyesi"
+        "value": "Ã‡OK YAKINDA",
+        "label": "Ekip Ãœyesi"
       }
     ]
   },
