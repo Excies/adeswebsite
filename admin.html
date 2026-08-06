@@ -127,7 +127,8 @@
         <span id="statusText"></span>
         <button id="loadJsonBtn" title="Elinizdeki content.json'u panele yükle">İçerik Yükle</button>
         <button id="reloadBtn" class="ghost" title="Paneli baştan doldur (değişiklikler kaybolur)">Sıfırla</button>
-        <button class="primary" id="saveBtn">💾 Kaydet &amp; İndir</button>
+        <button class="primary" id="pushBtn" title="GitHub'a gönder → site otomatik yayınlanır">🚀 Canlı Yayınla</button>
+        <button id="saveBtn" title="Sadece content.json indir (GitHub'a yazmaz)">💾 İndir</button>
       </div>
     </div>
     <nav id="tabs">
@@ -208,14 +209,14 @@
 
     <section class="pane" data-pane="yardim">
       <h2>Nasıl Kullanılır?</h2>
-      <p class="desc">Panel, sitenin içeriğini tek bir <b style="color:var(--fg)">content.json</b> dosyasında tutar. Sitedeki tüm bölümler bu dosyadan okunur. Düzenle → indir → GitHub'a yükle → Cloudflare otomatik yayınlar.</p>
+      <p class="desc">Panel, sitenin içeriğini tek bir <b style="color:var(--fg)">content.json</b> dosyasında tutar. Sitedeki tüm bölümler bu dosyadan okunur. Düzenle → <b>🚀 Canlı Yayınla</b> → GitHub'a komit edilir → Cloudflare otomatik yayınlar.</p>
       <ol class="help-steps">
         <li><b>Düzenle:</b> Soldaki sekmelerden bölümleri doldur. Fotoğraflar için "Yükle" ile dosya seç (panel otomatik küçültür) ya da doğrudan görsel linki yapıştır.</li>
-        <li><b>Kaydet:</b> Sağ üstteki <b>Kaydet &amp; İndir</b> butonuna bas. Tarayıcına <b>content.json</b> indirilir.</li>
-        <li><b>GitHub'a yükle:</b> İndirdiğin <code>content.json</code> dosyasını, <code>index.html</code> ve <code>admin.html</code> ile aynı klasöre koy. Repoya push et:
-          <code>git add .</code> → <code>git commit -m "içerik güncellendi"</code> → <code>git push</code></li>
-        <li><b>Cloudflare Pages:</b> Cloudflare Pages projen <code>main</code> dalındaki her push'ta siteyi otomatik yeniden yayınlar (birkaç dakika). Site, yeni <code>content.json</code>'u kullanmaya başlar.</li>
-        <li><b>Yedeklemek:</b> <code>content.json</code> dosyasının bir kopyasını bilgisayarında sakla; paneline "İçerik Yükle" ile geri yükleyebilirsin.</li>
+        <li><b>Canlı Yayınla:</b> Sağ üstteki <b>🚀 Canlı Yayınla</b> tuşuna bas. İçerik sunucudaki fonksiyon aracılığıyla <b>content.json</b> olarak GitHub'a kaydedilir.</li>
+        <li><b>Cloudflare Pages:</b> GitHub'a düşen her commit sonrası site birkaç dakika içinde otomatik yeniden yayınlanır; yeni <code>content.json</code> siteye yansır.</li>
+        <li><b>İlk kurulum (tek seferlik):</b> Cloudflare Dashboard'da Pages projen için şu gizli değişkenleri ayarla (sunucuda <code>GITHUB_TOKEN</code> gizli olarak saklanır, sitede asla gözükmez):<br>
+          <code>GITHUB_TOKEN</code> = GitHub kişisel erişim token'i (<b>repo</b> izni olmalı) · <code>GITHUB_REPO</code> = <i>sahip/repo</i> · <code>GITHUB_BRANCH</code> = <i>main</i></li>
+        <li><b>Yedeklemek:</b> İstersen <b>💾 İndir</b> ile <code>content.json</code>'u bilgisayarına kaydedip "İçerik Yükle" ile geri yükleyebilirsin.</li>
         <li><b>Şifre değiştir:</b> Aşağıdan panel şifreni değiştirebilirsin. (Not: statik sitede şifre sadece tarayıcıda korur; siteni herkes görebilir, panelin linkini paylaşma.)</li>
       </ol>
       <div class="card">
@@ -230,8 +231,8 @@
 
   <div class="savebar">
     <div class="inner">
-      <div class="hint">Kaydetmek için <b style="color:var(--gold)">Kaydet &amp; İndir</b> → indirilen <b>content.json</b>'u GitHub repo'nun kök klasörüne koy ve push et.</div>
-      <button class="primary" id="saveBtn2">💾 Kaydet &amp; İndir</button>
+      <div class="hint">Yayına almak için <b style="color:var(--gold)">🚀 Canlı Yayınla</b>'ya bas → içerik GitHub'a gider, site otomatik güncellenir.</div>
+      <button class="primary" id="pushBtn2">🚀 Canlı Yayınla</button>
     </div>
   </div>
 </div>
@@ -665,7 +666,38 @@
     toast('content.json indirildi → repo klasörüne koy ve git push.');
   }
   $('saveBtn').addEventListener('click', save);
-  $('saveBtn2').addEventListener('click', save);
+
+  // -- canlı yayınla: content.json'u GitHub'a commit et --
+  function pushLive(){
+    persist();
+    toast('🚀 GitHub\'a gönderiliyor...');
+    $('pushBtn').disabled = true; if($('pushBtn2')) $('pushBtn2').disabled = true;
+    var payload = {
+      content: data,
+      name: (data.config && data.config.instagram) ? ('ADES Panel @'+data.config.instagram) : 'ADES Panel'
+    };
+    fetch('/api/content', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      return r.json().catch(function(){ return {ok:false, error:'Sunucu yanıtı okunamadı'}; });
+    }).then(function(j){
+      $('pushBtn').disabled = false; if($('pushBtn2')) $('pushBtn2').disabled = false;
+      if(j && j.ok){
+        toast('✅ Yayınlandı! Cloudflare siteyi güncelliyor (1-3 dakika).');
+      } else {
+        toast('Hata: ' + (j && j.error ? j.error : 'bilinmiyor') + ' — indirme yapıldı.');
+        save();
+      }
+    }).catch(function(){
+      $('pushBtn').disabled = false; if($('pushBtn2')) $('pushBtn2').disabled = false;
+      toast('Bağlantı kurulamadı — content.json indirildi.');
+      save();
+    });
+  }
+  $('pushBtn').addEventListener('click', pushLive);
+  $('pushBtn2').addEventListener('click', pushLive);
 
   // -- load json manually --
   $('loadJsonBtn').addEventListener('click', function(){ $('jsonLoadInput').click(); });
