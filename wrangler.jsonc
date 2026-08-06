@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "adeswebsite",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "kv_namespaces": [
+    { "binding": "CONTENT", "id": "880e74204c9d40989ee8d34117735244" }
+  ],
+  "vars": {
+    "GITHUB_REPO": "Excies/adeswebsite",
+    "GITHUB_BRANCH": "main"
+  }
+}
