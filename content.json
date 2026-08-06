@@ -16,7 +16,7 @@
     "testiTitle": "Sahne bizi tanıyor",
     "covers": {
       "hero": "https://i.imgur.com/DpyJB6C.png",
-      "about": "https://i.ibb.co/F4Z7yVfx/Untitled-06-A-ustos-2026-19-38-44-1.png"
+      "about": "https://i.imgur.com/i5EWDWP.jpeg"
     },
     "stats": [
       {
@@ -38,7 +38,14 @@
     ]
   },
   "gallery": [],
-  "team": [],
+  "team": [
+    {
+      "image": "",
+      "name": "",
+      "role": "",
+      "instagram": ""
+    }
+  ],
   "testimonials": [],
   "partners": [],
   "blog": [],
