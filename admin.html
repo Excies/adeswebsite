@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADES Medya — Yönetim Paneli</title>
+<style>
+  :root{
+    --bg:#07100b; --panel:#0d1912; --panel2:#101f16; --line:#22382c; --line2:#33513f;
+    --fg:#eef7f0; --dim:#9db8a6; --gold:#2fe88a; --red:#ff5d5d;
+    --mono:'Consolas',monospace; --body:'Segoe UI',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--fg);font-family:var(--body);}
+  .hidden{display:none !important;}
+  input,select,textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--fg);
+    padding:9px 11px;border-radius:6px;font-family:var(--mono);font-size:13px;outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--gold);}
+  textarea{resize:vertical;min-height:64px;}
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:5px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .row.one{grid-template-columns:1fr;}
+  .col{display:flex;flex-direction:column;}
+  button{
+    font-family:var(--mono);font-size:12px;letter-spacing:.05em;border:1px solid var(--line2);
+    background:var(--panel2);color:var(--fg);padding:8px 14px;border-radius:6px;cursor:pointer;transition:all .15s ease;
+  }
+  button:hover{border-color:var(--gold);color:var(--gold);}
+  button.primary{background:var(--gold);color:#061109;border-color:var(--gold);font-weight:700;}
+  button.primary:hover{filter:brightness(1.1);color:#061109;}
+  button.danger:hover{border-color:var(--red);color:var(--red);}
+  button.small{padding:4px 9px;font-size:11px;}
+  button.ghost{background:transparent;}
+
+  /* login */
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-box{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:36px;text-align:center;}
+  .login-box h1{font-size:22px;letter-spacing:.06em;margin-bottom:6px;}
+  .login-box p{color:var(--dim);font-size:12px;margin-bottom:22px;}
+  .login-box input{margin-bottom:14px;text-align:center;}
+
+  /* app layout */
+  header{position:sticky;top:0;z-index:50;background:rgba(7,16,11,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+  .topbar{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;}
+  .topbar h1{font-size:17px;letter-spacing:.08em;white-space:nowrap;}
+  .topbar h1 em{color:var(--gold);font-style:normal;}
+  .topbar .actions{display:flex;gap:8px;align-items:center;}
+  #statusText{font-size:11px;color:var(--dim);font-family:var(--mono);white-space:nowrap;}
+
+  nav{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);}
+  nav button{
+    border:none;background:none;border-radius:0;padding:12px 12px;font-size:12.5px;color:var(--dim);white-space:nowrap;
+    border-bottom:2px solid transparent;
+  }
+  nav button:hover{color:var(--fg);border-color:transparent;}
+  nav button.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+  main{max-width:1100px;margin:0 auto;padding:26px 20px 140px;}
+  section.pane{display:none;}
+  section.pane.active{display:block;}
+  .pane h2{font-size:20px;margin-bottom:4px;}
+  .pane .desc{color:var(--dim);font-size:12.5px;margin-bottom:22px;line-height:1.6;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:18px;}
+  .card h3{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:16px;}
+  .card .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .formgrid .full{grid-column:1 / -1;}
+
+  .item{border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px;background:var(--panel2);}
+  .item .item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .item .item-title{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:.06em;}
+  .item .item-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .item .formgrid{grid-template-columns:1fr 1fr;}
+  .add-bar{display:flex;justify-content:center;margin:6px 0 20px;}
+
+  .imgfield{display:flex;gap:10px;align-items:flex-start;}
+  .imgfield .main{flex:1;display:flex;flex-direction:column;gap:6px;}
+  .imgfield .main .url-row{display:flex;gap:6px;}
+  .imgfield .main .url-row input{flex:1;}
+  .imgfield img.prev{width:74px;height:74px;object-fit:cover;border-radius:6px;border:1px solid var(--line2);background:#000;}
+  .imgfield .uploadlab{
+    border:1px dashed var(--line2);border-radius:6px;padding:7px 10px;font-size:11px;color:var(--dim);
+    cursor:pointer;white-space:nowrap;transition:border-color .15s ease;
+  }
+  .imgfield .uploadlab:hover{border-color:var(--gold);color:var(--gold);}
+  .imgfield input[type=file]{display:none;}
+
+  .help-steps{list-style:none;counter-reset:s;}
+  .help-steps li{counter-increment:s;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px;font-size:13.5px;line-height:1.7;color:var(--dim);}
+  .help-steps li::before{content:"Adım " counter(s);display:block;font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--gold);margin-bottom:4px;}
+  .help-steps code{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-family:var(--mono);color:var(--fg);}
+  .help-steps b{color:var(--fg);}
+
+  #toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--gold);color:#061109;
+    font-family:var(--mono);font-size:12px;padding:12px 22px;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:99;text-align:center;max-width:90vw;
+  }
+  #toast.show{opacity:1;}
+
+  .savebar{position:fixed;bottom:0;left:0;right:0;background:rgba(7,16,11,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:60;}
+  .savebar .inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .savebar .hint{font-size:11.5px;color:var(--dim);line-height:1.5;}
+
+  @media(max-width:720px){ .formgrid,.row,.item .formgrid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>ADES <em style="color:var(--gold)">MEDYA</em></h1>
+    <p>Yönetim Paneli</p>
+    <input type="password" id="passInput" placeholder="Şifre" autocomplete="off">
+    <button class="primary" style="width:100%" id="loginBtn">Giriş</button>
+    <p style="margin-top:14px;font-size:11px;color:#5c7768">Varsayılan şifre: <b style="color:var(--dim)">ades2026</b> — Yardım sekmesinden değiştirebilirsin.</p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="topbar">
+      <h1>ADES <em>MEDYA</em> <span style="color:var(--dim);font-weight:400;font-size:12px">/ Yönetim Paneli</span></h1>
+      <div class="actions">
+        <span id="statusText"></span>
+        <button id="loadJsonBtn" title="Elinizdeki content.json'u panele yükle">İçerik Yükle</button>
+        <button id="reloadBtn" class="ghost" title="Paneli baştan doldur (değişiklikler kaybolur)">Sıfırla</button>
+        <button class="primary" id="saveBtn">💾 Kaydet &amp; İndir</button>
+      </div>
+    </div>
+    <nav id="tabs">
+      <button data-tab="genel" class="active">Genel / Metinler</button>
+      <button data-tab="kapaklar">Kapaklar</button>
+      <button data-tab="istatistik">İstatistikler</button>
+      <button data-tab="galeri">Galeri</button>
+      <button data-tab="igfeed">Instagram</button>
+      <button data-tab="haberler">Haberler</button>
+      <button data-tab="ekip">Ekip</button>
+      <button data-tab="referanslar">Referanslar</button>
+      <button data-tab="partnerler">Partnerler</button>
+      <button data-tab="yardim">Nasıl Kurulur?</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="pane active" data-pane="genel">
+      <h2>Genel &amp; Metinler</h2>
+      <p class="desc">İletişim bilgileri ve sitenin ana metinleri. Kaydettiğinde bu alanlar otomatik olarak siteye yansır.</p>
+      <div class="card" id="genelCard"></div>
+    </section>
+
+    <section class="pane" data-pane="kapaklar">
+      <h2>Kapak Görselleri</h2>
+      <p class="desc">Sayfanın üstündeki (hero) ve "Hakkımızda" bölümündeki büyük görseller. Dosya yükleyebilir ya da doğrudan görsel bağlantısı (URL) yapıştırabilirsin.</p>
+      <div class="card" id="kapakCard"></div>
+    </section>
+
+    <section class="pane" data-pane="istatistik">
+      <h2>İstatistikler</h2>
+      <p class="desc">"Hakkımızda" altındaki sayı/slogan kutuları. Değer ve etiketi değiştir, istediğin kadar ekle.</p>
+      <div class="card" id="statCard"></div>
+      <div class="add-bar"><button class="primary" id="statAdd">+ İstatistik Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="galeri">
+      <h2>Galeri Fotoğrafları</h2>
+      <p class="desc">Sitedeki "Alandan kareler" bölümünü yönetir. Görsel ekle/sil, sırasını değiştir. Kategori yazarsan filtre butonları otomatik oluşur.</p>
+      <div class="card" id="galleryCard"></div>
+      <div class="add-bar"><button class="primary" id="galleryAdd">+ Fotoğraf Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="igfeed">
+      <h2>Instagram Önizlemesi</h2>
+      <p class="desc">Sitedeki Instagram kareleri. Beğeni/yorum sayısı da düzenlenebilir.</p>
+      <div class="card" id="igCard"></div>
+      <div class="add-bar"><button class="primary" id="igAdd">+ Kare Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="haberler">
+      <h2>Haberler / Blog</h2>
+      <p class="desc">Sitedeki "Sahne notları" bölümü. Haber ekle, başlık/metin/görsel düzenle, link ekle ya da sil.</p>
+      <div class="card" id="blogCard"></div>
+      <div class="add-bar"><button class="primary" id="blogAdd">+ Haber Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="ekip">
+      <h2>Ekip Üyeleri</h2>
+      <p class="desc">"Objektifin arkasındakiler" bölümü. Üye ekle, fotoğrafını ve Instagram'ını düzenle, sil.</p>
+      <div class="card" id="teamCard"></div>
+      <div class="add-bar"><button class="primary" id="teamAdd">+ Üye Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="referanslar">
+      <h2>Müşteri Yorumları</h2>
+      <p class="desc">Site altındaki yorum kartları. Yorumu ve üstteki etiketi değiştir, istediğin kadar ekle.</p>
+      <div class="card" id="testiCard"></div>
+      <div class="add-bar"><button class="primary" id="testiAdd">+ Yorum Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="partnerler">
+      <h2>Partnerler (kayan şerit)</h2>
+      <p class="desc">Sitenin altındaki kayan marka şeridi. İsim ekleyebilir/silebilirsin.</p>
+      <div class="card" id="partnerCard"></div>
+      <div class="add-bar"><button class="primary" id="partnerAdd">+ Partner Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="yardim">
+      <h2>Nasıl Kullanılır?</h2>
+      <p class="desc">Panel, sitenin içeriğini tek bir <b style="color:var(--fg)">content.json</b> dosyasında tutar. Sitedeki tüm bölümler bu dosyadan okunur. Düzenle → indir → GitHub'a yükle → Cloudflare otomatik yayınlar.</p>
+      <ol class="help-steps">
+        <li><b>Düzenle:</b> Soldaki sekmelerden bölümleri doldur. Fotoğraflar için "Yükle" ile dosya seç (panel otomatik küçültür) ya da doğrudan görsel linki yapıştır.</li>
+        <li><b>Kaydet:</b> Sağ üstteki <b>Kaydet &amp; İndir</b> butonuna bas. Tarayıcına <b>content.json</b> indirilir.</li>
+        <li><b>GitHub'a yükle:</b> İndirdiğin <code>content.json</code> dosyasını, <code>index.html</code> ve <code>admin.html</code> ile aynı klasöre koy. Repoya push et:
+          <code>git add .</code> → <code>git commit -m "içerik güncellendi"</code> → <code>git push</code></li>
+        <li><b>Cloudflare Pages:</b> Cloudflare Pages projen <code>main</code> dalındaki her push'ta siteyi otomatik yeniden yayınlar (birkaç dakika). Site, yeni <code>content.json</code>'u kullanmaya başlar.</li>
+        <li><b>Yedeklemek:</b> <code>content.json</code> dosyasının bir kopyasını bilgisayarında sakla; paneline "İçerik Yükle" ile geri yükleyebilirsin.</li>
+        <li><b>Şifre değiştir:</b> Aşağıdan panel şifreni değiştirebilirsin. (Not: statik sitede şifre sadece tarayıcıda korur; siteni herkes görebilir, panelin linkini paylaşma.)</li>
+      </ol>
+      <div class="card">
+        <h3>Panel Ayarları</h3>
+        <div class="formgrid">
+          <div class="col"><label>Yeni Şifre</label><input type="text" id="newPass" placeholder="Yeni şifre yaz"></div>
+          <div class="col" style="justify-content:flex-end"><button id="setPassBtn">Şifreyi Güncelle</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="savebar">
+    <div class="inner">
+      <div class="hint">Kaydetmek için <b style="color:var(--gold)">Kaydet &amp; İndir</b> → indirilen <b>content.json</b>'u GitHub repo'nun kök klasörüne koy ve push et.</div>
+      <button class="primary" id="saveBtn2">💾 Kaydet &amp; İndir</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="jsonLoadInput" accept=".json,application/json" style="display:none">
+<div id="toast"></div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  var DEFAULTS = {
+    config: {
+      email: 'iletisim.adesmedia@gmail.com',
+      phone: '546 655 52 27',
+      instagram: 'ades.media',
+      city: 'Ankara',
+      heroTag: 'ANKARA MERKEZLİ',
+      heroDesc: 'Konserlerin, etkinliklerin, konferansların sonsuz olmasını sağlayan bir ekibiz. Herkese, herkes için.',
+      aboutTitle: 'Biz kimiz?',
+      aboutText1: 'ADES Medya, markalar, kurumlar ve organizasyonlar için yaratıcı medya ve dijital çözümler üreten bir ajanstır. Fotoğraf ve video prodüksiyonu, sosyal medya içerikleri, grafik tasarım, web tasarımı ve marka yönetimi gibi birçok alanda profesyonel hizmet sunuyor, her projeyi özgün bir bakış açısıyla hayata geçiriyoruz.',
+      aboutText2: 'Konferanslardan kurumsal etkinliklere, MUN organizasyonlarından bireysel projelere kadar farklı ölçekte çalışmalar gerçekleştiriyor; kaliteli içerik, yaratıcı fikirler ve güçlü görsel deneyimlerle markaların hikâyelerini etkili bir şekilde anlatmalarına yardımcı oluyoruz.',
+      galleryTitle: 'Alandan kareler',
+      teamTitle: 'Objektifin arkasındakiler',
+      blogTitle: 'Sahne notları',
+      testiEyebrow: 'Organizatörler Ne Diyor',
+      testiTitle: 'Sahne bizi tanıyor',
+      covers: {
+        hero: 'https://i.imgur.com/DpyJB6C.png',
+        about: ''
+      },
+      stats: [
+        {value:'ÇOK YAKINDA', label:'Etkinlik'},
+        {value:'ÇOK YAKINDA', label:'Şehir'},
+        {value:'ÇOK YAKINDA', label:'Festival Ortaklığı'},
+        {value:'ÇOK YAKINDA', label:'Ekip Üyesi'}
+      ]
+    },
+    gallery: [],
+    igfeed: [],
+    blog: [],
+    team: [],
+    testimonials: [],
+    partners: [],
+  };
+
+  var LS_DATA = 'ades_admin_data';
+  var LS_PASS = 'ades_admin_pass';
+  var LS_LOGIN = 'ades_admin_logged';
+  var pass = localStorage.getItem(LS_PASS) || 'ades2026';
+  var data = JSON.parse(JSON.stringify(DEFAULTS));
+
+  function mergeDeep(base, ext){
+    if(!ext) return base;
+    if(Array.isArray(ext)) return ext.slice();
+    if(typeof ext !== 'object') return ext;
+    var out = {};
+    Object.keys(base||{}).forEach(function(k){ out[k] = mergeDeep(base[k], ext[k]); });
+    Object.keys(ext||{}).forEach(function(k){ if(!(k in out)) out[k] = ext[k]; });
+    return out;
+  }
+
+  function persist(){ localStorage.setItem(LS_DATA, JSON.stringify(data)); }
+  function getPath(path){ return path.split('.').reduce(function(o,k){ return o && o[k]; }, data); }
+  function setPath(path, val){
+    var keys = path.split('.');
+    var o = data;
+    for(var i=0;i<keys.length-1;i++){ if(!o[keys[i]]) o[keys[i]] = {}; o = o[keys[i]]; }
+    o[keys[keys.length-1]] = val;
+  }
+
+  function toast(msg){
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+  }
+
+  function fieldRow(label, bind, val, opts){
+    opts = opts || {};
+    var wrap = document.createElement('div');
+    wrap.className = 'col' + (opts.full ? ' full' : '');
+    var lab = document.createElement('label');
+    lab.textContent = label;
+    wrap.appendChild(lab);
+    if(opts.type === 'textarea'){
+      var ta = document.createElement('textarea');
+      ta.value = val || '';
+      ta.setAttribute('data-bind', bind);
+      ta.placeholder = opts.placeholder || '';
+      wrap.appendChild(ta);
+    } else if(opts.type === 'select'){
+      var sel = document.createElement('select');
+      sel.setAttribute('data-bind', bind);
+      (opts.options||[]).forEach(function(o){
+        var op = document.createElement('option');
+        op.value = o;
+        op.textContent = o || '(normal)';
+        if(String(val) === String(o)) op.selected = true;
+        sel.appendChild(op);
+      });
+      wrap.appendChild(sel);
+    } else if(opts.type === 'image'){
+      wrap.appendChild(imageField(bind, val));
+    } else {
+      var inp = document.createElement('input');
+      inp.value = val || '';
+      inp.setAttribute('data-bind', bind);
+      inp.placeholder = opts.placeholder || '';
+      wrap.appendChild(inp);
+    }
+    return wrap;
+  }
+
+  function imageField(bind, val){
+    var box = document.createElement('div');
+    box.className = 'imgfield';
+    var main = document.createElement('div');
+    main.className = 'main';
+    var urlRow = document.createElement('div');
+    urlRow.className = 'url-row';
+    var inp = document.createElement('input');
+    inp.value = val || '';
+    inp.setAttribute('data-bind', bind);
+    inp.placeholder = 'Görsel URL veya yükle...';
+    var lab = document.createElement('label');
+    lab.className = 'uploadlab';
+    lab.textContent = 'Yükle';
+    var fi = document.createElement('input');
+    fi.type = 'file';
+    fi.accept = 'image/*';
+    lab.appendChild(fi);
+    urlRow.appendChild(inp);
+    urlRow.appendChild(lab);
+    main.appendChild(urlRow);
+    var img = document.createElement('img');
+    img.className = 'prev';
+    img.alt = 'önizleme';
+    main.appendChild(img);
+    box.appendChild(main);
+    var sep = document.createElement('div');
+    box.appendChild(sep);
+
+    function refreshPrev(){
+      var v = inp.value.trim();
+      if(v){ img.src = v; img.style.display = 'block'; } else { img.style.display = 'none'; }
+    }
+    refreshPrev();
+    inp.addEventListener('input', function(){
+      refreshPrev();
+      setPath(bind, inp.value);
+      persist();
+    });
+    fi.addEventListener('change', function(){
+      var file = fi.files && fi.files[0];
+      if(!file) return;
+      resizeImage(file, function(url){
+        inp.value = url;
+        refreshPrev();
+        setPath(bind, url);
+        persist();
+        toast('Görsel eklendi ve küçültüldü.');
+      });
+    });
+    return box;
+  }
+
+  function resizeImage(file, cb){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var maxW = 1400;
+        var scale = Math.min(1, maxW / (img.width || maxW));
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        cb(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function(){ toast('Görsel okunamadı!'); };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function listItem(container, path, fields, titleFn, addFields){
+    var arr = getPath(path) || [];
+    var frag = document.createDocumentFragment();
+    arr.forEach(function(item, idx){
+      var div = document.createElement('div');
+      div.className = 'item';
+      var head = document.createElement('div');
+      head.className = 'item-head';
+      var t = document.createElement('span');
+      t.className = 'item-title';
+      t.textContent = titleFn(item, idx);
+      head.appendChild(t);
+      var acts = document.createElement('div');
+      acts.className = 'item-actions';
+      var up = document.createElement('button');
+      up.className = 'small ghost'; up.textContent = '↑';
+      up.disabled = idx === 0;
+      up.onclick = function(){ arr.splice(idx,1); arr.splice(idx-1,0,item); commit(); };
+      var down = document.createElement('button');
+      down.className = 'small ghost'; down.textContent = '↓';
+      down.disabled = idx === arr.length-1;
+      down.onclick = function(){ arr.splice(idx,1); arr.splice(idx+1,0,item); commit(); };
+      var del = document.createElement('button');
+      del.className = 'small danger ghost'; del.textContent = 'Sil';
+      del.onclick = function(){ arr.splice(idx,1); commit(); };
+      acts.appendChild(up); acts.appendChild(down); acts.appendChild(del);
+      head.appendChild(acts);
+      div.appendChild(head);
+
+      var grid = document.createElement('div');
+      grid.className = 'formgrid';
+      fields.forEach(function(f){
+        var bind = path + '.' + idx + '.' + f.key;
+        grid.appendChild(fieldRow(f.label, bind, item[f.key], f));
+      });
+      div.appendChild(grid);
+      frag.appendChild(div);
+    });
+    container.innerHTML = '';
+    container.appendChild(frag);
+  }
+
+  function commit(){ renderAll(); persist(); }
+
+  function renderGenel(){
+    var c = $('genelCard');
+    c.innerHTML = '';
+    var g = document.createElement('div');
+    g.className = 'formgrid';
+    var cfg = data.config;
+    [ ['email','E-posta'], ['phone','Telefon (örn. 546 655 52 27)'], ['instagram','Instagram kullanıcı adı'], ['city','Şehir'] ].forEach(function(f){
+      g.appendChild(fieldRow(f[1], 'config.'+f[0], cfg[f[0]]));
+    });
+    c.appendChild(g);
+
+    var card2 = document.createElement('div');
+    card2.className = 'card';
+    var h3 = document.createElement('h3'); h3.textContent = 'Ana Sayfa Metinleri'; card2.appendChild(h3);
+    var g2 = document.createElement('div'); g2.className = 'formgrid';
+    g2.appendChild(fieldRow('Hero etiketi (üst şerit)', 'config.heroTag', cfg.heroTag));
+    g2.appendChild(fieldRow('Galeri başlığı', 'config.galleryTitle', cfg.galleryTitle));
+    g2.appendChild(fieldRow('Hero açıklaması', 'config.heroDesc', cfg.heroDesc, {type:'textarea', full:true}));
+    g2.appendChild(fieldRow('Hakkımızda başlığı', 'config.aboutTitle', cfg.aboutTitle));
+    g2.appendChild(fieldRow('Ekip başlığı', 'config.teamTitle', cfg.teamTitle));
+    g2.appendChild(fieldRow('Hakkımızda metni 1', 'config.aboutText1', cfg.aboutText1, {type:'textarea', full:true}));
+    g2.appendChild(fieldRow('Hakkımızda metni 2', 'config.aboutText2', cfg.aboutText2, {type:'textarea', full:true}));
+    g2.appendChild(fieldRow('Haberler başlığı', 'config.blogTitle', cfg.blogTitle));
+    g2.appendChild(fieldRow('Yorumlar etiketi', 'config.testiEyebrow', cfg.testiEyebrow));
+    g2.appendChild(fieldRow('Yorumlar başlığı', 'config.testiTitle', cfg.testiTitle));
+    card2.appendChild(g2);
+    c.appendChild(card2);
+  }
+
+  function renderKapak(){
+    var c = $('kapakCard');
+    c.innerHTML = '';
+    var g = document.createElement('div'); g.className = 'formgrid';
+    g.appendChild(fieldRow('Hero (üst) kapak görseli', 'config.covers.hero', data.config.covers.hero, {type:'image', full:true}));
+    g.appendChild(fieldRow('Hakkımızda kapak görseli', 'config.covers.about', data.config.covers.about, {type:'image', full:true}));
+    c.appendChild(g);
+  }
+
+  function renderStats(){
+    listItem($('statCard'), 'config.stats',
+      [{key:'value',label:'Değer / Slogan'},{key:'label',label:'Etiket'}],
+      function(it, i){ return 'İstatistik ' + (i+1) + ' — ' + (it.label || ''); });
+  }
+
+  function renderGallery(){
+    listItem($('galleryCard'), 'gallery',
+      [
+        {key:'image',label:'Görsel',type:'image',full:true},
+        {key:'title',label:'Başlık'},
+        {key:'category',label:'Kategori (filtre)'},
+        {key:'meta',label:'Alt yazı'},
+        {key:'size',label:'Boyut',type:'select',options:['','wide','tall']}
+      ],
+      function(it, i){ return (i+1) + '. ' + (it.title || 'Görsel'); });
+  }
+
+  function renderIg(){
+    listItem($('igCard'), 'igfeed',
+      [
+        {key:'image',label:'Görsel',type:'image',full:true},
+        {key:'likes',label:'Beğeni'},
+        {key:'comments',label:'Yorum'}
+      ],
+      function(it, i){ return 'Kare ' + (i+1); });
+  }
+
+  function renderBlog(){
+    listItem($('blogCard'), 'blog',
+      [
+        {key:'image',label:'Görsel',type:'image',full:true},
+        {key:'title',label:'Başlık'},
+        {key:'tag',label:'Etiket'},
+        {key:'date',label:'Tarih'},
+        {key:'link',label:'Link (yoksa # bırak)'},
+        {key:'excerpt',label:'Özet metin',type:'textarea',full:true}
+      ],
+      function(it){ return it.title || 'Yeni haber'; });
+  }
+
+  function renderTeam(){
+    listItem($('teamCard'), 'team',
+      [
+        {key:'image',label:'Fotoğraf',type:'image',full:true},
+        {key:'name',label:'İsim'},
+        {key:'role',label:'Görev'},
+        {key:'instagram',label:'Instagram kullanıcı adı'}
+      ],
+      function(it){ return it.name || 'Üye'; });
+  }
+
+  function renderTesti(){
+    listItem($('testiCard'), 'testimonials',
+      [
+        {key:'quote',label:'Yorum',type:'textarea',full:true},
+        {key:'title',label:'Etiket (ör. Mekan Yönetimi)'}
+      ],
+      function(it){ return it.title || 'Yorum'; });
+  }
+
+  function renderPartners(){
+    listItem($('partnerCard'), 'partners',
+      [{key:'name',label:'İsim'}],
+      function(it, i){ return 'Partner ' + (i+1) + ' — ' + (it.name || ''); });
+  }
+
+  function renderAll(){
+    renderGenel();
+    renderKapak();
+    renderStats();
+    renderGallery();
+    renderIg();
+    renderBlog();
+    renderTeam();
+    renderTesti();
+    renderPartners();
+    $('statusText').textContent = data.config ? (data.config.instagram ? '@'+data.config.instagram : '') : '';
+  }
+
+  // -- init data --
+  function init(){
+    var saved = localStorage.getItem(LS_DATA);
+    if(saved){
+      try{ data = mergeDeep(JSON.parse(saved), JSON.parse(JSON.stringify(DEFAULTS))); }
+      catch(e){ data = JSON.parse(JSON.stringify(DEFAULTS)); }
+      renderAll();
+      toast('Son kaydettiğin içerik yüklendi.');
+      return;
+    }
+    fetch('content.json', {cache:'no-store'}).then(function(r){
+      if(!r.ok) throw new Error('yok');
+      return r.json();
+    }).then(function(j){
+      data = mergeDeep(j, JSON.parse(JSON.stringify(DEFAULTS)));
+      renderAll();
+    }).catch(function(){
+      data = JSON.parse(JSON.stringify(DEFAULTS));
+      renderAll();
+      toast('content.json bulunamadı — varsayılan içerik yüklendi.');
+    });
+  }
+
+  // -- login --
+  function showApp(){ $('loginScreen').classList.add('hidden'); $('app').classList.remove('hidden'); }
+  if(localStorage.getItem(LS_LOGIN) === '1') showApp();
+  $('loginBtn').addEventListener('click', function(){
+    if($('passInput').value === pass){ localStorage.setItem(LS_LOGIN,'1'); showApp(); init(); }
+    else toast('Şifre hatalı!');
+  });
+  $('passInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('loginBtn').click(); });
+
+  // -- tabs --
+  document.querySelectorAll('#tabs button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('#tabs button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('section.pane').forEach(function(p){ p.classList.toggle('active', p.getAttribute('data-pane')===tab); });
+    });
+  });
+
+  // -- global input binding --
+  document.addEventListener('input', function(e){
+    var bind = e.target.getAttribute('data-bind');
+    if(!bind) return;
+    setPath(bind, e.target.value);
+    persist();
+  });
+
+  // -- add buttons --
+  function addItem(path, template){
+    var arr = getPath(path) || [];
+    arr.push(JSON.parse(JSON.stringify(template)));
+    commit();
+    // switch to the tab that hosts the list
+    renderAll();
+  }
+  $('galleryAdd').addEventListener('click', function(){ addItem('gallery', {image:'',title:'',meta:'',category:'',size:''}); toast('Galeriye boş görsel eklendi — bilgileri doldur.'); });
+  $('igAdd').addEventListener('click', function(){ addItem('igfeed', {image:'',likes:'0',comments:'0'}); });
+  $('blogAdd').addEventListener('click', function(){ addItem('blog', {image:'',tag:'',date:'',title:'',excerpt:'',link:'#'}); });
+  $('teamAdd').addEventListener('click', function(){ addItem('team', {image:'',name:'',role:'',instagram:''}); });
+  $('testiAdd').addEventListener('click', function(){ addItem('testimonials', {quote:'',title:''}); });
+  $('partnerAdd').addEventListener('click', function(){ addItem('partners', {name:''}); });
+  $('statAdd').addEventListener('click', function(){ addItem('config.stats', {value:'',label:''}); });
+
+  // -- save --
+  function save(){
+    persist();
+    var json = JSON.stringify(data, null, 2);
+    var blob = new Blob([json], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'content.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 400);
+    toast('content.json indirildi → repo klasörüne koy ve git push.');
+  }
+  $('saveBtn').addEventListener('click', save);
+  $('saveBtn2').addEventListener('click', save);
+
+  // -- load json manually --
+  $('loadJsonBtn').addEventListener('click', function(){ $('jsonLoadInput').click(); });
+  $('jsonLoadInput').addEventListener('change', function(){
+    var f = this.files && this.files[0];
+    if(!f) return;
+    var rd = new FileReader();
+    rd.onload = function(){
+      try{
+        data = mergeDeep(JSON.parse(rd.result), JSON.parse(JSON.stringify(DEFAULTS)));
+        localStorage.setItem(LS_DATA, JSON.stringify(data));
+        renderAll();
+        toast('content.json yüklendi!');
+      }catch(e){ toast('Dosya geçersiz JSON!'); }
+    };
+    rd.readAsText(f);
+    this.value = '';
+  });
+
+  // -- reset --
+  $('reloadBtn').addEventListener('click', function(){
+    if(!confirm('Tüm değişiklikler silinip varsayılan içerik gelecek. Emin misin?')) return;
+    localStorage.removeItem(LS_DATA);
+    location.reload();
+  });
+
+  // -- change password --
+  $('setPassBtn').addEventListener('click', function(){
+    var np = $('newPass').value.trim();
+    if(np.length < 4){ toast('Şifre en az 4 karakter olmalı'); return; }
+    pass = np;
+    localStorage.setItem(LS_PASS, np);
+    $('newPass').value = '';
+    toast('Şifre güncellendi: ' + np);
+  });
+
+  if(localStorage.getItem(LS_LOGIN) === '1') init();
+})();
+</script>
+</body>
+</html>
