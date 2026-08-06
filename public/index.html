@@ -521,71 +521,44 @@
      burada sadece görünüm var — dokunmana gerek yok.
      ================================================================ */
 
-  /* ---------- pricing ---------- */
-  .pricing{padding:150px 0;}
-  .pricing-head{
-    display:flex;justify-content:space-between;align-items:flex-end;
-    margin-bottom:60px;flex-wrap:wrap;gap:30px;
-  }
-  .pricing-head h2{font-family:var(--display);font-size:clamp(40px,5vw,64px);}
-  .price-toggle{
-    display:flex;align-items:center;gap:14px;
-    font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--fg-dimmer);
-  }
-  .price-toggle .active-label{color:var(--fg);}
-  .switch{
-    width:52px;height:26px;border:1px solid var(--line-strong);border-radius:20px;
-    position:relative;cursor:none;background:var(--panel);
-  }
-  .switch::after{
-    content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
-    background:var(--gold);transition:transform .35s cubic-bezier(.16,.84,.44,1);
-  }
-  .switch.on::after{transform:translateX(24px);}
-
-  .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
-  .price-card{
-    border:1px solid var(--line);padding:40px 32px;position:relative;overflow:hidden;
-    transition:transform .4s cubic-bezier(.16,.84,.44,1), border-color .4s ease;
-    transform-style:preserve-3d;will-change:transform;
-    background:var(--bg-alt);
-  }
-  .price-card:hover{border-color:var(--line-strong);}
-  .price-card.featured{border-color:var(--gold);}
-  .price-card.featured::before{
-    content:'ÖNERİLEN';position:absolute;top:18px;right:-32px;
-    background:var(--gold);color:var(--gold-deep);font-family:var(--mono);font-size:10px;
-    letter-spacing:.1em;padding:5px 38px;transform:rotate(38deg);font-weight:600;
-  }
-  .price-name{font-family:var(--display);font-size:28px;letter-spacing:.02em;}
-  .price-desc{font-family:var(--mono);font-size:12px;color:var(--fg-dimmer);margin-top:6px;letter-spacing:.03em;}
-  .price-amount{
-    margin:28px 0 6px;font-family:var(--display);font-size:52px;color:var(--fg);
-    display:flex;align-items:baseline;gap:8px;
-  }
-  .price-amount span{font-family:var(--mono);font-size:14px;color:var(--fg-dim);}
-  .price-list{margin:26px 0 34px;display:flex;flex-direction:column;gap:12px;}
-  .price-list li{
-    font-size:14px;color:var(--fg-dim);display:flex;gap:10px;align-items:flex-start;line-height:1.5;
-  }
-  .price-list li::before{content:'✓';color:var(--gold);font-weight:700;}
-  .price-cta{
-    display:inline-block;width:100%;text-align:center;cursor:pointer;
-    font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;
-    border:1px solid var(--line-strong);padding:14px;border-radius:2px;
-    background:transparent;color:var(--fg);
+  /* ---------- rezervasyon ---------- */
+  .reserve{padding:150px 0;}
+  .reserve-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:70px;align-items:start;}
+  .reserve-head h2{font-family:var(--display);font-size:clamp(40px,5vw,64px);line-height:1.05;margin-bottom:22px;}
+  .reserve-head p{color:var(--fg-dim);font-size:16px;line-height:1.8;max-width:440px;}
+  .reserve-mail{
+    display:inline-flex;align-items:center;gap:12px;margin-top:30px;
+    font-family:var(--mono);font-size:14px;letter-spacing:.04em;color:var(--fg);
+    border:1px solid var(--line-strong);padding:16px 24px;border-radius:2px;
     transition:all .3s ease;
   }
-  .price-card.featured .price-cta{background:var(--gold);color:var(--gold-deep);border-color:var(--gold);font-weight:600;}
-  .price-cta:hover{border-color:var(--gold);background:rgba(47,232,138,.08);}
-  .price-card.featured .price-cta:hover{transform:translateY(-2px);}
-  .price-fade{transition:opacity .25s ease;}
-  .price-fade.fading{opacity:0;}
-  .price-note{
-    margin:30px 0 8px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;
-    text-transform:uppercase;color:var(--gold);
+  .reserve-mail:hover{border-color:var(--gold);box-shadow:0 8px 30px -12px rgba(47,232,138,.4);}
+  .reserve-mail svg{width:20px;height:20px;color:var(--gold);flex:0 0 auto;}
+  .reserve-list{margin-top:38px;display:flex;flex-direction:column;gap:16px;}
+  .reserve-list li{display:flex;gap:12px;align-items:flex-start;color:var(--fg-dim);font-size:15px;line-height:1.6;}
+  .reserve-list li::before{content:'→';color:var(--gold);font-weight:700;flex:0 0 auto;}
+  .reserve-form{
+    border:1px solid var(--line);background:var(--bg-alt);padding:48px 44px;position:relative;
   }
+  .reserve-form::before{
+    content:'RANDEVU TALEBI';position:absolute;top:-1px;left:44px;transform:translateY(-50%);
+    background:var(--bg-alt);padding:0 12px;font-family:var(--mono);font-size:11px;
+    letter-spacing:.14em;color:var(--gold);
+  }
+  .reserve-form h3{font-family:var(--display);font-size:30px;letter-spacing:.02em;margin-bottom:8px;}
+  .reserve-sub{font-family:var(--mono);font-size:12px;color:var(--fg-dim);margin-bottom:34px;letter-spacing:.04em;}
+  .reserve-form .form-row{grid-template-columns:1fr 1fr;}
+  .reserve-form .field{margin-bottom:22px;}
+  .reserve-submit{
+    width:100%;cursor:pointer;font-family:var(--mono);font-size:13px;letter-spacing:.1em;
+    text-transform:uppercase;border:1px solid var(--gold);background:var(--gold);
+    color:var(--gold-deep);padding:16px;border-radius:2px;font-weight:600;transition:all .3s ease;
+  }
+  .reserve-submit:hover{transform:translateY(-2px);box-shadow:0 16px 40px -14px rgba(47,232,138,.5);}
+  .reserve-note{margin-top:18px;font-size:12px;color:var(--fg-dimmer);line-height:1.7;text-align:center;}
+  .reserve-done{display:none;text-align:center;padding:20px 0;}
+  .reserve-done.show{display:block;animation:quoteIn .5s cubic-bezier(.16,.84,.44,1) both;}
+  .reserve-done h3{color:var(--gold);font-family:var(--display);font-size:26px;margin-bottom:10px;}
 
   /* ---------- faq ---------- */
   .faq{padding:150px 0;background:var(--bg-alt);}
@@ -977,10 +950,9 @@
     .footer-top{grid-template-columns:1fr 1fr;row-gap:40px;}
     .process-grid{grid-template-columns:1fr 1fr;row-gap:60px;}
     .testi-grid{grid-template-columns:1fr;}
-    .pricing-grid{grid-template-columns:1fr;}
+    .reserve-grid{grid-template-columns:1fr;gap:50px;}
     .ig-grid{grid-template-columns:repeat(3,1fr);}
     .blog-grid{grid-template-columns:1fr 1fr;}
-    .price-card.featured::before{right:-38px;}
   }
   @media (max-width:720px){
     .wrap{padding:0 22px;}
@@ -999,7 +971,7 @@
     .blob{filter:blur(70px);opacity:.18;}
     .ig-grid{grid-template-columns:repeat(2,1fr);}
     .blog-grid{grid-template-columns:1fr;}
-    .pricing-head, .igfeed-head{flex-direction:column;align-items:flex-start;}
+    .reserve-form .form-row{grid-template-columns:1fr;margin-top:44px;}
     body{cursor:auto;}
     .cursor,.cursor-dot{display:none;}
   }
@@ -1131,7 +1103,7 @@
       <li><a href="#surec">Süreç</a></li>
       <li><a href="#galeri">Galeri</a></li>
       <li><a href="#ekip">Ekibimiz</a></li>
-      <li><a href="#paketler">Paketler</a></li>
+      <li><a href="#rezervasyon">Rezervasyon</a></li>
       <li><a href="#sss">SSS</a></li>
       <li><a href="#iletisim">İletişim</a></li>
     </ul>
@@ -1149,7 +1121,7 @@
     <li><a href="#surec">Süreç</a></li>
     <li><a href="#galeri">Galeri</a></li>
     <li><a href="#ekip">Ekibimiz</a></li>
-    <li><a href="#paketler">Paketler</a></li>
+    <li><a href="#rezervasyon">Rezervasyon</a></li>
     <li><a href="#sss">SSS</a></li>
     <li><a href="#basvur">Ekibe Katıl</a></li>
     <li><a href="#iletisim">İletişim</a></li>
@@ -1448,49 +1420,74 @@ document.querySelectorAll(".glitch-text").forEach(el => {
      üstteki anahtar (switch) bu ikisi arasında geçiş yapıyor. Fiyat,
      açıklama ve özellik listesini (price-list) doğrudan değiştirebilirsin.
      ================================================================ -->
-<section class="pricing" id="paketler">
+<section class="reserve" id="rezervasyon">
   <div class="wrap">
-    <div class="pricing-head reveal">
-      <div>
-        <div class="eyebrow">Paketler</div>
-        <h2>Bütçene uygun kadraj</h2>
-      </div>
-    </div>
-    <div class="pricing-grid reveal">
-      <div class="price-card">
-        <div class="price-name">Tekli Etkinlik</div>
-        <div class="price-desc">Tek geceli konser / kulüp etkinlikleri için</div>
-        <div class="price-note">Fiyat görüşülerek belirlenir</div>
-        <ul class="price-list">
-          <li>1 fotoğrafçı, 4 saat çekim</li>
-          <li>48 saatte teslim</li>
-          <li>Online galeri linki</li>
+    <div class="reserve-grid">
+      <div class="reserve-head reveal">
+        <div class="eyebrow">Rezervasyon</div>
+        <h2>Randevunu<br>şimdi al</h2>
+        <p>Takvimimiz hızla doluyor. Etkinlik tarihini ilet, ekibimiz sana e-posta ile dönerek tarihi ve detayları netleştirsin.</p>
+        <a class="reserve-mail" href="mailto:iletisim.adesmedia@gmail.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>
+          iletisim.adesmedia@gmail.com
+        </a>
+        <ul class="reserve-list">
+          <li>Detaylı fiyat bilgisi e-posta ile paylaşılır</li>
+          <li>Randevu ve çekim planı birlikte netleştirilir</li>
+          <li>İş günü içinde yanıt garantisi</li>
         </ul>
-        <button type="button" class="price-cta js-open-quote" data-paket="Tekli Etkinlik">Teklif Al</button>
       </div>
-      <div class="price-card featured">
-        <div class="price-name">Festival Paketi</div>
-        <div class="price-desc">Çok sahneli, çok günlü etkinlikler için</div>
-        <div class="price-note">Fiyat görüşülerek belirlenir</div>
-        <ul class="price-list">
-          <li>2-3 fotoğrafçı + 1 videographer</li>
-          <li>Gün sonu hızlı seçki</li>
-          <li>Sosyal medya için kısa video</li>
-          <li>24 saatte ilk teslim</li>
-        </ul>
-        <button type="button" class="price-cta js-open-quote" data-paket="Festival Paketi">Teklif Al</button>
-      </div>
-      <div class="price-card">
-        <div class="price-name">Sezonluk Ortaklık</div>
-        <div class="price-desc">Mekan / ajanslar için yıl boyu anlaşma</div>
-        <div class="price-note">Fiyat görüşülerek belirlenir</div>
-        <ul class="price-list">
-          <li>Aylık sabit etkinlik kontenjanı</li>
-          <li>Sabit ekip &amp; öncelikli takvim</li>
-          <li>Marka içerik &amp; arşiv yönetimi</li>
-          <li>Özel fiyatlandırma</li>
-        </ul>
-        <button type="button" class="price-cta js-open-quote" data-paket="Sezonluk Ortaklık">Görüşelim</button>
+      <div class="reserve-form reveal">
+        <h3>Rezervasyon Talebi</h3>
+        <p class="reserve-sub">Aşağıdaki formu doldur, talebin mail kutumuzda.</p>
+        <form id="reserveForm" novalidate action="https://formsubmit.co/iletisim.adesmedia@gmail.com" method="POST">
+          <input type="hidden" name="_subject" value="Ades Medya - Rezervasyon Talebi">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_captcha" value="false">
+          <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+          <div class="form-row">
+            <div class="field">
+              <label for="rname">Ad Soyad</label>
+              <input id="rname" name="Ad Soyad" type="text" placeholder="Adın Soyadın" required>
+              <div class="field-error">Bu alanı doldurman gerekiyor.</div>
+            </div>
+            <div class="field">
+              <label for="rdate">Etkinlik Tarihi</label>
+              <input id="rdate" name="Etkinlik Tarihi" type="date" required>
+              <div class="field-error">Tarih seçmelisin.</div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="remail">E-posta</label>
+            <input id="remail" name="E-posta" type="email" placeholder="ornek@eposta.com" required>
+            <div class="field-error">Geçerli bir e-posta adresi gir.</div>
+          </div>
+          <div class="field">
+            <label for="rphone">Telefon</label>
+            <input id="rphone" name="Telefon" type="tel" placeholder="05xx xxx xx xx">
+          </div>
+          <div class="field">
+            <label for="rtype">Etkinlik Türü</label>
+            <select id="rtype" name="Etkinlik Türü">
+              <option>Konser / Kulüp</option>
+              <option>Festival</option>
+              <option>Düğün</option>
+              <option>Mekan Lansmanı</option>
+              <option>Kurumsal Etkinlik</option>
+              <option>Diğer</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="rmsg">Mesajın</label>
+            <textarea id="rmsg" name="Mesaj" placeholder="Etkinliğin hakkında kısaca bilgi ver..."></textarea>
+          </div>
+          <button type="submit" class="reserve-submit">Randevu Talebi Gönder →</button>
+          <p class="reserve-note">Gönder butonuna bastığında talebin e-posta olarak bize ulaşır. Teşekkürler!</p>
+        </form>
+        <div class="reserve-done" id="reserveDone">
+          <h3>Talebin alındı ✓</h3>
+          <p class="reserve-sub" style="margin:0;">En kısa sürede e-posta ile sana dönüş yapacağız.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1515,7 +1512,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       </div>
       <div class="faq-item">
         <button class="faq-q"><span>Fotoğrafları ne zaman teslim alıyoruz?</span><span class="plus">+</span></button>
-        <div class="faq-a"><p>Standart teslim süremiz 48 saattir. Festival paketlerinde gün sonu hızlı bir seçki, tam galeri ise 48 saat içinde gelir.</p></div>
+        <div class="faq-a"><p>Standart teslim süremiz 48 saattir. Çok günlü festival etkinliklerinde gün sonu hızlı bir seçki, tam galeri ise 48 saat içinde gelir.</p></div>
       </div>
       <div class="faq-item">
         <button class="faq-q"><span>Şehir dışı etkinliklere geliyor musunuz?</span><span class="plus">+</span></button>
@@ -1751,7 +1748,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     <div class="chat-msg bot">Merhaba! 👋 ADES Medya asistanıyım. Fiyatlandırma, ekibe katılım ya da bir etkinlik için teklif hakkında sorularını buradan yanıtlayabilirim.</div>
   </div>
   <div class="chat-quick" id="chatQuick">
-    <button class="chat-chip" data-q="Fiyatlar nasıl?">Fiyatlar nasıl?</button>
+    <button class="chat-chip" data-q="Randevu nasıl alınır?">Randevu nasıl alınır?</button>
     <button class="chat-chip" data-q="Ekibe nasıl katılırım?">Ekibe katılım</button>
     <button class="chat-chip" data-q="Bir insanla görüşmek istiyorum">Canlı temsilci</button>
   </div>
@@ -1914,17 +1911,6 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     });
   }
   attachTeamTilt();
-
-  // pricing card tilt (lighter than team cards)
-  document.querySelectorAll('.price-card').forEach(card=>{
-    card.addEventListener('mousemove', (e)=>{
-      const r = card.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5;
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      card.style.transform = `perspective(900px) rotateY(${px*4}deg) rotateX(${-py*4}deg) translateY(-6px)`;
-    });
-    card.addEventListener('mouseleave', ()=>{ card.style.transform = 'perspective(900px) rotateY(0) rotateX(0) translateY(0)'; });
-  });
 
 
   // FAQ accordion
@@ -2467,6 +2453,29 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     });
   });
 
+  // Rezervasyon formu — FormSubmit.co üzerinden e-posta olarak gönderir
+  const reserveForm = document.getElementById('reserveForm');
+  reserveForm?.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const rbtn = reserveForm.querySelector('.reserve-submit');
+    if(rbtn){ rbtn.disabled = true; rbtn.textContent = 'Gönderiliyor...'; }
+    fetch(reserveForm.action, {
+      method: 'POST',
+      body: new FormData(reserveForm),
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(res=>{
+      if(!res.ok) throw new Error('Gönderim başarısız');
+      const done = document.getElementById('reserveDone');
+      if(done){ reserveForm.style.display = 'none'; done.classList.add('show'); }
+    })
+    .catch(()=>{
+      if(rbtn){ rbtn.disabled = false; rbtn.textContent = 'Randevu Talebi Gönder →'; }
+      const note = reserveForm.querySelector('.reserve-note');
+      if(note){ note.textContent = 'Bir şeyler ters gitti. Lütfen doğrudan e-posta gönder: iletisim.adesmedia@gmail.com'; }
+    });
+  });
+
   // ======================================================================
   // CANLI DESTEK / AI SOHBET WIDGET'I — mantık
   // Yanıtlar önce gerçek AI'dan (getAIReply) üretilir; ağ hatası/limit
@@ -2518,8 +2527,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       'ADES Medya; Ankara merkezli, konser / festival / etkinlik / konferans ' +
       'fotoğraf-video çekimi ile sosyal medya içerik üretimi yapan bir ekiptir. ' +
       'İletişim: ' + SITE_CONFIG.contactEmail + ', +90 ' + SITE_CONFIG.phone +
-      ', Instagram @' + SITE_CONFIG.instagram + '. Sitede "Paketler" (Tekli Etkinlik, ' +
-      'Festival Paketi, Sezonluk Ortaklık), "Galeri" ve "Ekibe Katıl" bölümleri bulunur. ' +
+      ', Instagram @' + SITE_CONFIG.instagram + '. Sitede "Rezervasyon", "Galeri" ve "Ekibe Katıl" bölümleri bulunur. ' +
       'Ziyaretçiye kısa (2-3 cümle), samimi ve Türkçe cevap ver; selam, nasılsın, naber gibi ' +
       'genel sohbetlere de doğal karşılık ver ve gereksiz uzatma. Ziyaretçinin mesajı: ' + msg;
     const res = await fetch('https://text.pollinations.ai/', {
@@ -2542,7 +2550,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   function getBotReply(msg){
     const m = msg.toLowerCase();
     if(m.includes('fiyat') || m.includes('ücret') || m.includes('paket')){
-      return 'Paketlerimizi "Paketler" bölümünden inceleyebilirsin. Etkinliğinin ölçeğine göre özel teklif de hazırlayabiliriz — bana etkinlik tipini yazman yeterli.';
+      return 'Fiyat bilgisi e-posta ile paylaşılıyor. "Rezervasyon" bölümünden randevu talep edebilir ya da ' + SITE_CONFIG.contactEmail + ' adresine yazabilirsin — en kısa sürede dönüş yaparız.';
     }
     if(m.includes('katıl') || m.includes('iş') || m.includes('kariyer') || m.includes('başvur')){
       return 'Harika! Aşağıdaki "Ekibe Katıl" formunu doldurman yeterli — 4 adımda tamamlanıyor ve başvurun doğrudan ekibe ulaşıyor.';
