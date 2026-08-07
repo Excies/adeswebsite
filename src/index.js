@@ -210,6 +210,18 @@ async function handleIgFeed(request, env) {
   });
 }
 
+// ---------- ziyaretçi sayacı ----------
+async function handleVisit(request, env) {
+  const key = 'visits';
+  let count = 0;
+  try { count = parseInt(await env.CONTENT.get(key), 10) || 0; } catch (e) { /* yok */ }
+  if (request.method === 'POST') {
+    count += 1;
+    try { await env.CONTENT.put(key, String(count)); } catch(e) { /* yok */ }
+  }
+  return json({ ok:true, visits:count }, 200);
+}
+
 // ---------- ana fetch ----------
 export default {
   async fetch(request, env, ctx) {
@@ -221,6 +233,9 @@ export default {
     }
     if (path === '/api/igfeed') {
       return handleIgFeed(request, env);
+    }
+    if (path === '/api/visit' ) {
+      return handleVisit(request, env);
     }
     if (path === '/content.json') {
       try {
