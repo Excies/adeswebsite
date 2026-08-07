@@ -195,12 +195,11 @@ async function handleIgFeed(request, env) {
     });
   }
 
-  let source = 'instagram-public';
-  try {
-    const scraped = await scrapePublic(username);
-    if (scraped && scraped.length) posts.splice(0, posts.length, ...scraped);
-    else source = 'kv-config';
-  } catch (e) { source = 'kv-config'; }
+  let source = 'kv-config';
+  if (!posts.length) {
+    source = 'instagram-public';
+    try { posts.push(...(await scrapePublic(username))); } catch (e) { /* yok */ }
+  }
 
   return json({
     ok: posts.length > 0,
