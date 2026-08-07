@@ -750,16 +750,27 @@
     padding:40px;backdrop-filter:blur(6px);
   }
   .lightbox.open{display:flex;}
-  .lightbox img{max-width:88vw;max-height:80vh;object-fit:contain;border:1px solid var(--line-strong);}
+  #lightboxImg{max-width:88vw;max-height:78vh;object-fit:contain;border:1px solid var(--line-strong);}
+  #lightboxCap{
+    text-align:center;margin-top:18px;
+    font-family:var(--body);font-size:14px;color:var(--fg);
+  }
   .lightbox-close{
-    position:absolute;top:34px;right:40px;font-family:var(--mono);
-    font-size:13px;letter-spacing:.1em;color:var(--fg-dim);text-transform:uppercase;
+    position:absolute;top:30px;right:36px;font-family:var(--mono);
+    font-size:26px;line-height:1;color:var(--fg-dim);background:none;border:none;
+    cursor:pointer;transition:color .3s;padding:6px 10px;
   }
-  .lightbox-close:hover{color:var(--fg);}
-  .lightbox-cap{
-    position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
-    font-family:var(--mono);font-size:12px;color:var(--fg-dim);letter-spacing:.05em;
+  .lightbox-close:hover{color:var(--fg);transform:rotate(90deg);}
+  .lightbox-nav{
+    position:absolute;top:50%;transform:translateY(-50%);
+    background:rgba(255,255,255,.04);border:1px solid var(--line-strong);
+    color:var(--fg);width:52px;height:52px;border-radius:50%;
+    font-size:26px;cursor:pointer;transition:all .3s;line-height:1;z-index:5;
   }
+  .lightbox-nav:hover{background:var(--gold);color:#0b0b0d;}
+  .lightbox-prev{left:26px;}
+  .lightbox-next{right:26px;}
+  .lightbox-body{display:flex;flex-direction:column;align-items:center;max-width:92vw;}
 
   /* ---------- teklif / iletişim modal ---------- */
   .quote-modal{
@@ -1370,6 +1381,17 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   </div>
 </section>
 
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Kapat">×</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Önceki">‹</button>
+  <figure class="lightbox-body">
+    <img id="lightboxImg" src="" alt="">
+    <figcaption id="lightboxCap"></figcaption>
+  </figure>
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Sonraki">›</button>
+</div>
+
 <!-- ================================================================
      İÇERİK: INSTAGRAM FEED ÖNİZLEMESİ
      Aşağıdaki yedek kareler yalnızca canlı akış çalışmadığında görünür.
@@ -1745,16 +1767,10 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     <div class="footer-bottom">
       <span>© 2026 ADES MEDYA — TÜM HAKLARI SAKLIDIR</span>
 <span>made by <a href="https://instagram.com/utku.bozdagg" target="_blank" rel="noopener" style="color:var(--accent,#2fe88a);text-decoration:underline;">utku bozdağ</a></span>
+<span class="visit-counter">· <span id="visitCount">…</span> ziyaretçi</span>
     </div>
   </div>
 </footer>
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox">
-  <a class="lightbox-close" id="lightboxClose">Kapat ✕</a>
-  <img id="lightboxImg" src="" alt="">
-  <div class="lightbox-cap" id="lightboxCap"></div>
-</div>
 
 <!-- ================================================================
      CANLI DESTEK / AI SOHBET WIDGET'I
@@ -2052,8 +2068,30 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   const lightbox = document.getElementById('lightbox');
   const lbImg = document.getElementById('lightboxImg');
   const lbCap = document.getElementById('lightboxCap');
+  let lbItems = [], lbIndex = -1;
+  function renderLb(i){
+    if(i<0) i=lbItems.length-1; if(i>=lbItems.length) i=0; lbIndex=i;
+    const it = lbItems[i], img = it.querySelector('img');
+    let src = img.getAttribute('data-full') || img.src;
+    src = src.replace('w=900','w=1600').replace('w=1400','w=1800');
+    lbImg.src = src;
+    const cap = it.querySelector('.g-title');
+    lbCap.textContent = cap ? cap.textContent : '';
+  }
   document.getElementById('lightboxClose').addEventListener('click', ()=>lightbox.classList.remove('open'));
-  lightbox.addEventListener('click', (e)=>{ if(e.target===lightbox) lightbox.classList.remove('open'); });
+  document.getElementById('lightbox').addEventListener('click', (e)=>{
+    if(e.target===lightbox) lightbox.classList.remove('open');
+  });
+  const lbPrev = document.getElementById('lightboxPrev');
+  const lbNext = document.getElementById('lightboxNext');
+  if(lbPrev) lbPrev.addEventListener('click', (e)=>{ e.stopPropagation(); renderLb(lbIndex-1); });
+  if(lbNext) lbNext.addEventListener('click', (e)=>{ e.stopPropagation(); renderLb(lbIndex+1); });
+  document.addEventListener('keydown', (e)=>{
+    if(!lightbox.classList.contains('open')) return;
+    if(e.key==='Escape') lightbox.classList.remove('open');
+    else if(e.key==='ArrowLeft') renderLb(lbIndex-1);
+    else if(e.key==='ArrowRight') renderLb(lbIndex+1);
+  });
 
   // gallery filter (delegasyonla, dinamik içerikle de çalışır)
   const filterBtns = document.querySelectorAll('.filter-btn');
@@ -2071,9 +2109,8 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   document.getElementById('gridGallery').addEventListener('click', (e)=>{
     const it = e.target.closest('.g-item');
     if(!it) return;
-    const img = it.querySelector('img');
-    lbImg.src = img.src.replace('w=900','w=1600').replace('w=1400','w=1800');
-    lbCap.textContent = it.querySelector('.g-title').textContent + ' — ' + it.querySelector('.g-meta').textContent;
+    lbItems = Array.from(document.querySelectorAll('#gridGallery .g-item:not(.hide)'));
+    renderLb(lbItems.indexOf(it));
     lightbox.classList.add('open');
   });
 
@@ -2341,6 +2378,20 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     }
   }
   loadDynamicContent();
+
+  // ziyaretçi sayacı (oturumda bir kez artır, sayıyı göster)
+  (function(){
+    const vc = document.getElementById('visitCount');
+    if(!vc) return;
+    try{
+      const counted = sessionStorage.getItem('adesVisted');
+      fetch('/api/visit', { method: counted ? 'GET' : 'POST', cache:'no-store' })
+        .then(r=>r.json())
+        .then(d=>{ vc.textContent = (d && d.visits!=null) ? d.visits : '—'; })
+        .catch(()=>{ vc.textContent = '—'; });
+      sessionStorage.setItem('adesVisted', '1');
+    }catch(e){}
+  })();
 
   // Instagram profil embed iframe src'si loadDynamicContent içinde
   // data.config.instagram'dan ayarlanır.
