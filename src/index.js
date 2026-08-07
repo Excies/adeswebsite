@@ -122,14 +122,62 @@ async function resolvePostImage(postUrl) {
   throw new Error('Görsel çözülemedi (HTTP ' + res.status + ')');
 }
 
+// ades.media gibi açık bir hesabın tüm gönderilerini çek (oturumsuz).
+async function scrapePublic(username) {
+  const endpoints = [
+    `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
+    `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
+  ];
+  const appIds = ['936619743392459'];
+  let lastErr = null;
+  for (const ep of endpoints) {
+    for (const appId of appIds) {
+      try {
+        const res = await fetch(ep, {
+          headers: {
+            'user-agent': UA,
+            'accept': '*/*',
+            'accept-language': 'en-US,en;q=0.9',
+            'x-ig-app-id': appId,
+            'x-requested-with': 'XMLHttpRequest',
+            'referer': 'https://www.instagram.com/' + encodeURIComponent(username) + '/',
+          },
+        });
+        if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+        const j = await res.json();
+        const user = j && j.data && j.data.user;
+        if (!user) { lastErr = new Error('Kullanıcı bulunamadı'); continue; }
+        const edges = (user.edge_owner_to_timeline_media && user.edge_owner_to_timeline_media.edges) || [];
+        if (!edges.length) { lastErr = new Error('Gönderi yok'); continue; }
+        return edges.slice(0, 12).map(e => {
+          const n = e.node || {};
+          const res = n.thumbnail_resources || [];
+          const thumb = res.length ? res[res.length - 1].src : (n.display_url || '');
+          const cap = n.edge_media_to_caption && n.edge_media_to_caption.edges &&
+            n.edge_media_to_caption.edges[0] && n.edge_media_to_caption.edges[0].node;
+          return {
+            url: n.shortcode ? `https://www.instagram.com/p/${n.shortcode}/` : '',
+            image: n.display_url || '',
+            thumb,
+            likes: String((n.edge_liked_by && n.edge_liked_by.count) || 0),
+            comments: String((n.edge_media_to_comment && n.edge_media_to_comment.count) || 0),
+            caption: cap ? cap.text : '',
+          };
+        }).filter(p => p.image && p.image.indexOf('http') === 0);
+      } catch (e) { lastErr = e; }
+    }
+  }
+  throw lastErr || new Error('Instagram scraper başarısız');
+}
+
 async function handleIgFeed(request, env) {
   const url = new URL(request.url);
   const username = (url.searchParams.get('username') || 'ades.media').replace(/[^a-zA-Z0-9._]/g, '').toLowerCase();
   const content = await loadContent(env, request);
-  const items = (content && content.igfeed) || [];
+  const items = ((content && content.igfeed) || []).slice(0, 12);
 
   const posts = [];
-  for (const it of items.slice(0, 12)) {
+  for (const it of items) {
     const link = String(it.link || '').trim();
     let image = '';
     if (link) {
@@ -147,10 +195,17 @@ async function handleIgFeed(request, env) {
     });
   }
 
+  let source = 'instagram-public';
+  try {
+    const scraped = await scrapePublic(username);
+    if (scraped && scraped.length) posts.splice(0, posts.length, ...scraped);
+    else source = 'kv-config';
+  } catch (e) { source = 'kv-config'; }
+
   return json({
     ok: posts.length > 0,
     username,
-    source: 'kv-config',
+    source,
     updated_at: Date.now(),
     posts,
   });
