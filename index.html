@@ -1545,7 +1545,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
               <div class="field-error">Bu alanı doldurman gerekiyor.</div>
             </div>
             <div class="field">
-              <label for="rdate">Etkinlik Tarihi <span class="hint">(takvimden seç)</span></label>
+              <label for="rdate">Etkinlik Tarihi / Tarihleri <span class="hint">(birden fazla gün işaretleyebilirsin)</span></label>
               <input id="rdate" name="Etkinlik Tarihi" type="text" placeholder="Gün·Ay·Yıl" required readonly>
               <input type="hidden" id="rdateISO" name="Etkinlik Tarihi (seçili)">
               <div class="cal" id="cal">
@@ -1558,9 +1558,9 @@ document.querySelectorAll(".glitch-text").forEach(el => {
                   <span>Pt</span><span>Sa</span><span>Ça</span><span>Pe</span><span>Cu</span><span>Ct</span><span>Pa</span>
                 </div>
                 <div class="cal-grid" id="calGrid"></div>
-                <div class="cal-legend"><span class="dot avail"></span> Uygun <span class="dot busy"></span> Dolu <span class="dot sel"></span> Seçili</div>
+                <div class="cal-legend"><span class="dot avail"></span> Uygun <span class="dot busy"></span> Dolu <span class="dot sel"></span> Seçili — çoklu seçebilirsin</div>
               </div>
-              <div class="field-error">Tarih seçmelisin.</div>
+              <div class="field-error">En az bir tarih seçmelisin.</div>
             </div>
           </div>
           <div class="field">
@@ -2611,6 +2611,21 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     const initial = (window.ADES_DATA && window.ADES_DATA.config && window.ADES_DATA.config.blockedDates) ||
                     (window.SITE_DATA && window.SITE_DATA.config && window.SITE_DATA.config.blockedDates) || [];
     syncBlocked(initial);
+    let selected = [];
+    const loadSelected = ()=> selected = (rdateISO.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+    function pushSelected(){
+      rdateISO.value = selected.join(',');
+      if(selected.length){
+        const labels = selected.map(iso=>{
+          const dt = new Date(iso+'T00:00');
+          return dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'});
+        });
+        rdate.value = labels.join(', ');
+      } else {
+        rdate.value = '';
+      }
+    }
+    loadSelected();
     function render(){
       const year = cur.getFullYear(), month = cur.getMonth();
       title.textContent = new Date(year, month, 1).toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
@@ -2625,7 +2640,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
         const iso = fmtISO(dt);
         const isPast = dt < today;
         const isBusy = blocked.includes(iso);
-        const isSel = rdateISO.value === iso;
+        const isSel = selected.includes(iso);
         const isToday = iso === fmtISO(today);
         let cls = 'cal-day';
         if(isSel) cls += ' sel';
@@ -2640,9 +2655,10 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       const b = e.target.closest('.cal-day');
       if(!b || b.classList.contains('off') || b.classList.contains('busy') || b.classList.contains('empty')) return;
       const iso = b.dataset.iso;
-      rdateISO.value = iso;
-      const dt = new Date(iso+'T00:00');
-      rdate.value = dt.toLocaleDateString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric'});
+      const idx = selected.indexOf(iso);
+      if(idx >= 0) selected.splice(idx, 1);
+      else selected.push(iso);
+      pushSelected();
       render();
     });
     prev.addEventListener('click', ()=>{ cur.setMonth(cur.getMonth()-1); render(); });
