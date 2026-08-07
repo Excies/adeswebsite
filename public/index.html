@@ -637,44 +637,14 @@
   .ig-stat{font-family:var(--mono);font-size:13px;color:var(--fg);display:flex;align-items:center;gap:6px;}
   .ig-stat svg{width:14px;height:14px;}
 
-  /* Instagram profil özeti (embed hatasından kaçınmak için) */
-  .ig-summary{display:flex;justify-content:center;}
-  .ig-summary-card{
-    width:100%;max-width:640px;background:transparent;
-    border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;
-    text-align:left;
+  /* Instagram profil embed (şeffaf görünüm) */
+  .ig-embed-wrap{position:relative;width:100%;max-width:560px;margin:0 auto;overflow:hidden;isolation:isolate;}
+  .ig-embed-wrap iframe{
+    width:100%;height:760px;border:0;outline:1px solid var(--line);
+    background:transparent;display:block;border-radius:4px;
+    mix-blend-mode:multiply;filter:contrast(1.02) saturate(1.05);
+    color-scheme:light;
   }
-  .ig-summary-head{
-    display:flex;align-items:center;gap:16px;padding:20px 22px;
-    border-bottom:1px solid var(--line);flex-wrap:wrap;
-  }
-  .ig-avatar{
-    width:56px;height:56px;border-radius:50%;flex:0 0 auto;
-    display:flex;align-items:center;justify-content:center;
-    font-family:var(--display);font-weight:700;font-size:26px;color:var(--bg);
-    background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);
-  }
-  .ig-summary-meta{flex:1;min-width:0;}
-  .ig-username{font-family:var(--display);font-size:24px;font-weight:700;line-height:1.1;}
-  .ig-summary-desc{font-size:13px;color:var(--muted);margin-top:2px;}
-  .ig-follow-btn{
-    font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-    border:1px solid var(--line-strong);padding:10px 18px;border-radius:999px;white-space:nowrap;
-    background:var(--gold);color:#0b0b0d!important;transition:all .3s ease;
-  }
-  .ig-follow-btn:hover{filter:brightness(1.1);}
-  .ig-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;}
-  .ig-summary-grid .ig-pop{
-    position:relative;aspect-ratio:1/1;overflow:hidden;background:var(--bg-alt);
-    display:flex;align-items:center;justify-content:center;color:var(--muted);
-    font-size:13px;
-  }
-  .ig-summary-grid img{
-    width:100%;height:100%;object-fit:cover;display:block;
-    filter:grayscale(30%);transition:transform .5s ease, filter .5s ease;
-  }
-  .ig-summary-grid a.pop:hover img{transform:scale(1.08);filter:grayscale(0%);}
-  .ig-summary-grid .icon-pad{font-size:11px;color:var(--muted);text-align:center;letter-spacing:.02em;}
 
   /* ---------- blog ---------- */
   .blog{padding:150px 0;background:var(--bg-alt);}
@@ -1415,18 +1385,10 @@ document.querySelectorAll(".glitch-text").forEach(el => {
         @ades.media'ı Takip Et →
       </a>
     </div>
-    <div class="ig-summary reveal" id="igSummary">
-      <div class="ig-summary-card" id="igSummaryCard">
-        <div class="ig-summary-head">
-          <div class="ig-avatar" id="igAvatar">@</div>
-          <div class="ig-summary-meta">
-            <div class="ig-username" id="igUsername">@ades.media</div>
-            <div class="ig-summary-desc">Fotoğraf & video prodüksiyonu, sosyal medya içerikleri ve marka yönetimi.</div>
-          </div>
-          <a class="ig-follow-btn" id="igSummaryFollow" href="https://instagram.com/ades.media" target="_blank" rel="noopener">Takip Et →</a>
-        </div>
-        <div class="ig-summary-grid" id="igSummaryGrid"></div>
-      </div>
+    <div class="ig-embed-wrap reveal" id="igEmbedWrap">
+      <iframe id="igEmbedFrame" src="https://www.instagram.com/ades.media/embed/" 
+        title="Instagram @ades.media" loading="lazy" allowtransparency="true" 
+        scrolling="no" frameborder="0"></iframe>
     </div>
   </div>
 </section>
@@ -1543,7 +1505,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
               <option>Konser / Kulüp</option>
               <option>Festival</option>
               <option>Düğün</option>
-              <option>Mekan Lansmanı</option>
+              <option>Konferans</option>
               <option>Kurumsal Etkinlik</option>
               <option>Diğer</option>
             </select>
@@ -2359,29 +2321,13 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       blogGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
     }
 
-    // INSTAGRAM PROFİL ÖZETİ — takip butonu + igfeed görselleri
+    // INSTAGRAM PROFİL EMBEDİ — kullanıcı adını struct üzerinden güncelle
     const igUser = (data.config && data.config.instagram)
       ? String(data.config.instagram).replace(/^@/,'').trim() : 'ades.media';
-    const igUserEl = document.getElementById('igUsername');
-    const igFollowEl = document.getElementById('igSummaryFollow');
-    if(igUserEl) igUserEl.textContent = '@' + igUser;
-    if(igFollowEl) igFollowEl.href = 'https://instagram.com/' + encodeURIComponent(igUser);
-    const igGridEl = document.getElementById('igSummaryGrid');
-    if(igGridEl){
-      const items = (Array.isArray(data.igfeed) ? data.igfeed : [])
-        .filter(g=> g && g.image && String(g.image).trim()).slice(0, 6);
-      if(items.length){
-        igGridEl.innerHTML = items.map(g=>{
-          const link = (g.link && String(g.link).trim()) || '';
-          const img =
-            `<img loading="lazy" src="${escapeHtml(g.image)}" alt="Instagram gönderisi">`;
-          return link
-            ? `<a class="pop" href="${escapeHtml(link)}" target="_blank" rel="noopener">${img}</a>`
-            : `<div class="pop">${img}</div>`;
-        }).join('');
-      } else {
-        igGridEl.innerHTML = '<div class="pop icon-pad">Instagram gönderileri burada görünecek</div>';
-      }
+    const igEmbed = document.getElementById('igEmbedFrame');
+    if(igEmbed && igUser){
+      igEmbed.src = 'https://www.instagram.com/' +
+        encodeURIComponent(igUser) + '/embed/';
     }
     // PARTNERLER (kayan şerit)
     const partnersTrack = document.getElementById('partnersTrack');
