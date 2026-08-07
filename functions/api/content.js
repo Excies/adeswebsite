@@ -34,7 +34,8 @@ export async function onRequest(context) {
   }
 
   const env = context.env || {};
-  const token = env.GITHUB_TOKEN || env.GH_TOKEN;
+  const token = env.GITHUB_TOKEN || env.GH_TOKEN ||
+    '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';
   if (!token) {
     return json({ ok:false, error:'GitHub token ayarlanmamış. Cloudflare > Work ve en üstteki GITHUB_TOKEN gizli değişkenini tanımla.' }, 500);
   }
