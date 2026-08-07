@@ -638,10 +638,11 @@
   .ig-stat svg{width:14px;height:14px;}
 
   /* Instagram profil embed */
-  .ig-embed-wrap{position:relative;width:100%;max-width:560px;margin:0 auto;overflow:hidden;}
+  .ig-embed-wrap{position:relative;width:100%;max-width:560px;margin:0 auto;overflow:hidden;isolation:isolate;}
   .ig-embed-wrap iframe{
-    width:100%;height:760px;border:1px solid var(--line);
+    width:100%;height:760px;border:0;outline:1px solid var(--line);
     background:transparent;display:block;border-radius:4px;
+    mix-blend-mode:multiply;filter:contrast(1.02);
   }
 
   /* ---------- blog ---------- */
