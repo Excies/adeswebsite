@@ -222,6 +222,14 @@ export default {
     if (path === '/api/igfeed') {
       return handleIgFeed(request, env);
     }
+    if (path === '/content.json') {
+      try {
+        const stored = env.CONTENT && (await env.CONTENT.get('content'));
+        if (stored) {
+          return new Response(stored, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
+        }
+      } catch (e) { /* KV bozuksa assets'e düş */ }
+    }
     return env.ASSETS.fetch(request);
   },
 };
