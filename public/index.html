@@ -556,6 +556,40 @@
 
   /* ---------- rezervasyon ---------- */
   .reserve{padding:150px 0;}
+  .cal{
+    border:1px solid var(--line-strong);border-radius:6px;padding:16px;margin-top:14px;
+    background:var(--panel);max-width:340px;
+  }
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cal-title{font-family:var(--display);font-size:18px;letter-spacing:.02em;}
+  .cal-nav{
+    width:34px;height:34px;border:1px solid var(--line-strong);border-radius:50%;
+    background:transparent;color:var(--fg);cursor:pointer;font-size:18px;line-height:1;
+    transition:all .3s;
+  }
+  .cal-nav:hover{background:var(--gold);color:#0b0b0d;}
+  .cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+  .cal-week span{font-family:var(--mono);font-size:10px;color:var(--fg-dimmer);text-align:center;padding:2px 0;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-day{
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+    font-family:var(--body);font-size:13px;color:var(--fg);cursor:pointer;border-radius:4px;
+    background:transparent;transition:all .2s;border:none;
+  }
+  .cal-day:hover:not(.off):not(.busy){background:rgba(47,232,138,.15);color:var(--gold);}
+  .cal-day.off{color:var(--fg-dimmer);opacity:.4;cursor:not-allowed;}
+  .cal-day.empty{cursor:default;}
+  .cal-day.busy{color:var(--fg-dimmer);cursor:not-allowed;position:relative;}
+  .cal-day.busy::after{content:'';position:absolute;width:60%;height:1px;background:rgba(238,247,240,.35);transform:rotate(-45deg);}
+  .cal-day.sel{background:var(--gold);color:#0b0b0d;font-weight:600;}
+  .cal-day.today{box-shadow:inset 0 0 0 1px var(--gold);}
+  .cal-legend{display:flex;align-items:center;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:10px;color:var(--fg-dimmer);}
+  .cal-legend .dot{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:middle;}
+  .dot.avail{background:#1c3a2a;}
+  .dot.busy{background:#3a2f1c;opacity:.6;}
+  .dot.sel{background:var(--gold);}
+  .hint{font-family:var(--mono);font-size:10px;color:var(--fg-dimmer);letter-spacing:.03em;}
   .reserve-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:70px;align-items:start;}
   .reserve-head h2{font-family:var(--display);font-size:clamp(40px,5vw,64px);line-height:1.05;margin-bottom:22px;}
   .reserve-head p{color:var(--fg-dim);font-size:16px;line-height:1.8;max-width:440px;}
@@ -1511,8 +1545,21 @@ document.querySelectorAll(".glitch-text").forEach(el => {
               <div class="field-error">Bu alanı doldurman gerekiyor.</div>
             </div>
             <div class="field">
-              <label for="rdate">Etkinlik Tarihi</label>
-              <input id="rdate" name="Etkinlik Tarihi" type="date" required>
+              <label for="rdate">Etkinlik Tarihi <span class="hint">(takvimden seç)</span></label>
+              <input id="rdate" name="Etkinlik Tarihi" type="text" placeholder="Gün·Ay·Yıl" required readonly>
+              <input type="hidden" id="rdateISO" name="Etkinlik Tarihi (seçili)">
+              <div class="cal" id="cal">
+                <div class="cal-head">
+                  <button type="button" class="cal-nav" id="calPrev" aria-label="Önceki ay">‹</button>
+                  <span class="cal-title" id="calTitle">Ağustos 2026</span>
+                  <button type="button" class="cal-nav" id="calNext" aria-label="Sonraki ay">›</button>
+                </div>
+                <div class="cal-week">
+                  <span>Pt</span><span>Sa</span><span>Ça</span><span>Pe</span><span>Cu</span><span>Ct</span><span>Pa</span>
+                </div>
+                <div class="cal-grid" id="calGrid"></div>
+                <div class="cal-legend"><span class="dot avail"></span> Uygun <span class="dot busy"></span> Dolu <span class="dot sel"></span> Seçili</div>
+              </div>
               <div class="field-error">Tarih seçmelisin.</div>
             </div>
           </div>
@@ -2254,6 +2301,8 @@ document.querySelectorAll(".glitch-text").forEach(el => {
 
     // -- METİNLER (config) --
     const cfg = data.config || {};
+    window.ADES_DATA = data;
+    if(window.adesRefreshCal) window.adesRefreshCal(data.config ? data.config.blockedDates : []);
     setText('heroDesc', cfg.heroDesc);
     setText('heroTag', cfg.heroTag);
     setText('aboutTitle', cfg.aboutTitle);
@@ -2542,10 +2591,76 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     });
   });
 
+  // Takvim / uygunluk seçimi
+  (function(){
+    const rdate = document.getElementById('rdate');
+    const rdateISO = document.getElementById('rdateISO');
+    const cal = document.getElementById('cal');
+    if(!rdate || !cal) return;
+    const grid = document.getElementById('calGrid');
+    const title = document.getElementById('calTitle');
+    const prev = document.getElementById('calPrev');
+    const next = document.getElementById('calNext');
+    let cur = new Date();
+    cur.setDate(1);
+    const fmtISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    let blocked = [];
+    function syncBlocked(raw){
+      blocked = (raw || []).map(String);
+    }
+    const initial = (window.ADES_DATA && window.ADES_DATA.config && window.ADES_DATA.config.blockedDates) ||
+                    (window.SITE_DATA && window.SITE_DATA.config && window.SITE_DATA.config.blockedDates) || [];
+    syncBlocked(initial);
+    function render(){
+      const year = cur.getFullYear(), month = cur.getMonth();
+      title.textContent = new Date(year, month, 1).toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
+      const first = new Date(year, month, 1).getDay(); // 0=Paz
+      const offset = (first === 0) ? 6 : first - 1; // Pazartesi başlat
+      const daysInMonth = new Date(year, month+1, 0).getDate();
+      const today = new Date(); today.setHours(0,0,0,0);
+      const cells = [];
+      for(let i=0;i<offset;i++) cells.push('<span class="cal-day empty"></span>');
+      for(let d=1; d<=daysInMonth; d++){
+        const dt = new Date(year, month, d);
+        const iso = fmtISO(dt);
+        const isPast = dt < today;
+        const isBusy = blocked.includes(iso);
+        const isSel = rdateISO.value === iso;
+        const isToday = iso === fmtISO(today);
+        let cls = 'cal-day';
+        if(isSel) cls += ' sel';
+        else if(isBusy) cls += ' busy';
+        else if(isPast) cls += ' off';
+        cls += (isToday ? ' today' : '');
+        cells.push(`<button type="button" class="${cls}" data-iso="${iso}" data-day="${d}">${d}</button>`);
+      }
+      grid.innerHTML = cells.join('');
+    }
+    grid.addEventListener('click', (e)=>{
+      const b = e.target.closest('.cal-day');
+      if(!b || b.classList.contains('off') || b.classList.contains('busy') || b.classList.contains('empty')) return;
+      const iso = b.dataset.iso;
+      rdateISO.value = iso;
+      const dt = new Date(iso+'T00:00');
+      rdate.value = dt.toLocaleDateString('tr-TR', {day:'2-digit', month:'2-digit', year:'numeric'});
+      render();
+    });
+    prev.addEventListener('click', ()=>{ cur.setMonth(cur.getMonth()-1); render(); });
+    next.addEventListener('click', ()=>{ cur.setMonth(cur.getMonth()+1); render(); });
+    window.adesRefreshCal = function(raw){ syncBlocked(raw); render(); };
+    render();
+  })();
+
   // Rezervasyon formu — FormSubmit.co üzerinden e-posta olarak gönderir
   const reserveForm = document.getElementById('reserveForm');
   reserveForm?.addEventListener('submit', (e)=>{
     e.preventDefault();
+    const iso = document.getElementById('rdateISO');
+    if(iso && !iso.value){
+      const note = reserveForm.querySelector('.reserve-note');
+      if(note){ note.textContent = 'Lütfen takvimden bir tarih seç.'; note.style.color='var(--gold)'; }
+      return;
+    }
     const rbtn = reserveForm.querySelector('.reserve-submit');
     if(rbtn){ rbtn.disabled = true; rbtn.textContent = 'Gönderiliyor...'; }
     fetch(reserveForm.action, {
