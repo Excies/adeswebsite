@@ -170,9 +170,9 @@ export async function onRequest(context) {
   if (cached) return cached;
 
   let posts = null;
-  let source = 'config';
+  let source = 'instagram-public';
   try {
-    posts = await buildFromConfig(context);
+    posts = await fetchPublic(username);
   } catch (e) {
     posts = null;
   }
@@ -184,8 +184,12 @@ export async function onRequest(context) {
     } catch (e) { posts = null; }
   }
   if (!posts || !posts.length) {
-    source = 'instagram-public';
-    try { posts = await fetchPublic(username); } catch (e) { posts = null; }
+    source = 'config';
+    try {
+      posts = await buildFromConfig(context);
+    } catch (e) {
+      posts = null;
+    }
   }
 
   const body = JSON.stringify({
