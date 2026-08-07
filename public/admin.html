@@ -115,6 +115,7 @@
     <p>Yönetim Paneli</p>
     <input type="password" id="passInput" placeholder="Şifre" autocomplete="off">
     <button class="primary" style="width:100%" id="loginBtn">Giriş</button>
+    
   </div>
 </div>
 
@@ -294,7 +295,17 @@
     return out;
   }
 
-  function persist(){ localStorage.setItem(LS_DATA, JSON.stringify(data)); }
+  function persist(){
+    if(data && data.config){
+      var bd = data.config.blockedDates;
+      if(typeof bd === 'string' && !Array.isArray(bd)){
+        data.config.blockedDates = bd.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+      } else if(Array.isArray(bd)){
+        data.config.blockedDates = bd.map(String);
+      }
+    }
+    localStorage.setItem(LS_DATA, JSON.stringify(data));
+  }
   function getPath(path){ return path.split('.').reduce(function(o,k){ return o && o[k]; }, data); }
   function setPath(path, val){
     var keys = path.split('.');
@@ -491,6 +502,7 @@
     g2.appendChild(fieldRow('Haberler başlığı', 'config.blogTitle', cfg.blogTitle));
     g2.appendChild(fieldRow('Yorumlar etiketi', 'config.testiEyebrow', cfg.testiEyebrow));
     g2.appendChild(fieldRow('Yorumlar başlığı', 'config.testiTitle', cfg.testiTitle));
+    g2.appendChild(fieldRow('Dolu Tarihler (YYYY-AA-GG, virgülle)', 'config.blockedDates', (cfg.blockedDates||[]).join(', '), {type:'textarea', full:true}));
     card2.appendChild(g2);
     c.appendChild(card2);
   }
