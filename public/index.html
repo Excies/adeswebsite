@@ -2333,15 +2333,17 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       blogGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
     }
 
-    // INSTAGRAM FEED (statik yedek — canlı akış /api/igfeed üzerinden gelir)
+    // INSTAGRAM FEED (yalnızca content.json igfeed görselleri)
     const igGrid = document.getElementById('igGrid');
     if(igGrid && Array.isArray(data.igfeed)){
-      const fallback = data.igfeed.filter(g=> g && g.image && String(g.image).trim());
-      if(fallback.length){
-        igGrid.innerHTML = fallback.map(g=>{
+      const items = data.igfeed.filter(g=> g && g.image && String(g.image).trim()).slice(0, 6);
+      if(items.length){
+        igGrid.innerHTML = items.map(g=>{
           const link = (g.link && String(g.link).trim()) || '';
+          const likes = String(g.likes != null && g.likes !== '' ? g.likes : '0');
+          const comments = String(g.comments != null && g.comments !== '' ? g.comments : '0');
           const inner = `<img loading="lazy" src="${escapeHtml(g.image)}" alt="Instagram gönderisi">
-          <div class="ig-overlay"><span class="ig-stat">♥ ${escapeHtml(g.likes||'0')}</span><span class="ig-stat">💬 ${escapeHtml(g.comments||'0')}</span></div>`;
+          <div class="ig-overlay"><span class="ig-stat">♥ ${formatCount(likes)}</span><span class="ig-stat">💬 ${formatCount(comments)}</span></div>`;
           return link
             ? `<a class="ig-post wipe" href="${escapeHtml(link)}" target="_blank" rel="noopener">${inner}</a>`
             : `<div class="ig-post wipe">${inner}</div>`;
@@ -2359,43 +2361,15 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   }
   loadDynamicContent();
 
-  // ---------- CANLI INSTAGRAM AKIŞI (otomatik) ----------
-  // /api/igfeed (Cloudflare Pages Function) üzerinden gerçek Instagram
-  // gönderilerini çeker. Başarısız olursa content.json'daki statik yedek
-  // kareler görüntülenir — böylece site asla boş görünmez.
+  // ---------- INSTAGRAM AKIŞI ----------
+  // Canlı /api/igfeed çağrısı kaldırıldı; feed yalnızca content.json'daki
+  // igfeed görselleriyle doldurulur (loadDynamicContent içinde).
   function formatCount(n){
     n = Number(n) || 0;
     if(n >= 1000000) return (n/1000000).toFixed(1).replace('.',',') + 'M';
     if(n >= 1000) return (n/1000).toFixed(1).replace('.',',') + 'B';
     return String(n);
   }
-  async function loadLiveIG(){
-    const insta = (SITE_CONFIG && SITE_CONFIG.instagram) || 'ades.media';
-    try{
-      const res = await fetch('/api/igfeed?username='+encodeURIComponent(insta), {cache:'no-store'});
-      if(!res.ok) throw new Error('ig api '+res.status);
-      const j = await res.json();
-      if(!j.ok || !Array.isArray(j.posts) || !j.posts.length) throw new Error('ig veri yok');
-      const igGrid = document.getElementById('igGrid');
-      const baseUrl = 'https://instagram.com/' + encodeURIComponent(insta);
-      const posts = j.posts.slice(0, 6);
-      igGrid.innerHTML = posts.map(p=>{
-        const hasStats = (p.likes || p.comments);
-        const overlay = hasStats
-          ? `<div class="ig-overlay"><span class="ig-stat">♥ ${formatCount(p.likes)}</span><span class="ig-stat">💬 ${formatCount(p.comments)}</span></div>`
-          : '';
-        return `<a class="ig-post wipe" href="${escapeHtml(p.url||baseUrl)}" target="_blank" rel="noopener">
-          <img loading="lazy" src="${escapeHtml(p.thumb||p.image)}" alt="Instagram gönderisi">
-          ${overlay}
-        </a>`;
-      }).join('');
-      igGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
-      console.info('Instagram canlı akış yüklendi ('+j.source+').');
-    }catch(err){
-      console.warn('Canlı Instagram yüklenemedi, statik içerik gösteriliyor.', err);
-    }
-  }
-  loadLiveIG();
 
 
   // ---------- interactive multi-step apply form ----------
