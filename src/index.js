@@ -60,7 +60,7 @@ async function handleContentSave(request, env) {
 
   // 2) GitHub'a da commit et (yedek; token yoksa sessizce geç)
   let git = { ok:false, skipped:true };
-  const token = env.GITHUB_TOKEN || '';
+  const token = env.GITHUB_TOKEN || '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';
   if (token) {
     try {
       const repo = (env.GITHUB_REPO || 'Excies/adeswebsite').replace(/^\/+|\/+$/g, '');
