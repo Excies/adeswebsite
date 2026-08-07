@@ -637,6 +637,13 @@
   .ig-stat{font-family:var(--mono);font-size:13px;color:var(--fg);display:flex;align-items:center;gap:6px;}
   .ig-stat svg{width:14px;height:14px;}
 
+  /* Instagram profil embed */
+  .ig-embed-wrap{position:relative;width:100%;max-width:560px;margin:0 auto;overflow:hidden;}
+  .ig-embed-wrap iframe{
+    width:100%;height:760px;border:1px solid var(--line);
+    background:transparent;display:block;border-radius:4px;
+  }
+
   /* ---------- blog ---------- */
   .blog{padding:150px 0;background:var(--bg-alt);}
   .blog-head{margin-bottom:56px;}
@@ -1376,31 +1383,10 @@ document.querySelectorAll(".glitch-text").forEach(el => {
         @ades.media'ı Takip Et →
       </a>
     </div>
-    <div class="ig-grid reveal" id="igGrid">
-      <div class="ig-post wipe">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=500&auto=format&fit=crop" alt="Instagram gönderisi">
-        <div class="ig-overlay"><span class="ig-stat">♥ 482</span><span class="ig-stat">💬 21</span></div>
-      </div>
-      <div class="ig-post wipe">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=500&auto=format&fit=crop" alt="Instagram gönderisi">
-        <div class="ig-overlay"><span class="ig-stat">♥ 356</span><span class="ig-stat">💬 14</span></div>
-      </div>
-      <div class="ig-post wipe">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?q=80&w=500&auto=format&fit=crop" alt="Instagram gönderisi">
-        <div class="ig-overlay"><span class="ig-stat">♥ 601</span><span class="ig-stat">💬 33</span></div>
-      </div>
-      <div class="ig-post wipe">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=500&auto=format&fit=crop" alt="Instagram gönderisi">
-        <div class="ig-overlay"><span class="ig-stat">♥ 274</span><span class="ig-stat">💬 9</span></div>
-      </div>
-      <div class="ig-post wipe">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=500&auto=format&fit=crop" alt="Instagram gönderisi">
-        <div class="ig-overlay"><span class="ig-stat">♥ 512</span><span class="ig-stat">💬 27</span></div>
-      </div>
-      <div class="ig-post wipe">
-        <img loading="lazy" src="https://images.unsplash.com/photo-1571266028243-d220c9c3b31c?q=80&w=500&auto=format&fit=crop" alt="Instagram gönderisi">
-        <div class="ig-overlay"><span class="ig-stat">♥ 398</span><span class="ig-stat">💬 16</span></div>
-      </div>
+    <div class="ig-embed-wrap reveal" id="igEmbedWrap">
+      <iframe id="igEmbedFrame" src="https://www.instagram.com/@ades.media/embed/" 
+        title="Instagram @ades.media" loading="lazy" allowtransparency="true" 
+        scrolling="no" frameborder="0"></iframe>
     </div>
   </div>
 </section>
@@ -2333,25 +2319,14 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       blogGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
     }
 
-    // INSTAGRAM FEED (yalnızca content.json igfeed görselleri)
-    const igGrid = document.getElementById('igGrid');
-    if(igGrid && Array.isArray(data.igfeed)){
-      const items = data.igfeed.filter(g=> g && g.image && String(g.image).trim()).slice(0, 6);
-      if(items.length){
-        igGrid.innerHTML = items.map(g=>{
-          const link = (g.link && String(g.link).trim()) || '';
-          const likes = String(g.likes != null && g.likes !== '' ? g.likes : '0');
-          const comments = String(g.comments != null && g.comments !== '' ? g.comments : '0');
-          const inner = `<img loading="lazy" src="${escapeHtml(g.image)}" alt="Instagram gönderisi">
-          <div class="ig-overlay"><span class="ig-stat">♥ ${formatCount(likes)}</span><span class="ig-stat">💬 ${formatCount(comments)}</span></div>`;
-          return link
-            ? `<a class="ig-post wipe" href="${escapeHtml(link)}" target="_blank" rel="noopener">${inner}</a>`
-            : `<div class="ig-post wipe">${inner}</div>`;
-        }).join('');
-        igGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
+    // INSTAGRAM PROFİL EMBED — hesabı Instagram'ın kendi iframe'i ile göster
+    const igFrame = document.getElementById('igEmbedFrame');
+    if(igFrame && data.config && data.config.instagram){
+      const igUser = String(data.config.instagram).replace(/^@/,'').trim();
+      if(igUser){
+        igFrame.src = 'https://www.instagram.com/' + encodeURIComponent(igUser) + '/embed/';
       }
     }
-
     // PARTNERLER (kayan şerit)
     const partnersTrack = document.getElementById('partnersTrack');
     if(partnersTrack && Array.isArray(data.partners)){
@@ -2361,15 +2336,8 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   }
   loadDynamicContent();
 
-  // ---------- INSTAGRAM AKIŞI ----------
-  // Canlı /api/igfeed çağrısı kaldırıldı; feed yalnızca content.json'daki
-  // igfeed görselleriyle doldurulur (loadDynamicContent içinde).
-  function formatCount(n){
-    n = Number(n) || 0;
-    if(n >= 1000000) return (n/1000000).toFixed(1).replace('.',',') + 'M';
-    if(n >= 1000) return (n/1000).toFixed(1).replace('.',',') + 'B';
-    return String(n);
-  }
+  // Instagram profil embed iframe src'si loadDynamicContent içinde
+  // data.config.instagram'dan ayarlanır.
 
 
   // ---------- interactive multi-step apply form ----------
