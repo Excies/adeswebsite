@@ -2065,6 +2065,17 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target);} });
   }, {threshold:0.18});
   revealEls.forEach(el=>io.observe(el));
+  // dinamik içerik (content.json) yüklendikten sonra ekranda/ekrana yakın
+  // duran ama henüz açılmamış reveal'ları güvenle açar (mobildeki boşluk
+  // sorununun sebebi: içerik, observer çalıştıktan SONRA geliyordu).
+  function revealVisible(){
+    document.querySelectorAll('.reveal:not(.in)').forEach(el=>{
+      const r = el.getBoundingClientRect();
+      if(r.top < window.innerHeight && r.bottom > 0){
+        el.classList.add('in'); io.unobserve(el);
+      }
+    });
+  }
 
   // counters
   const counters = document.querySelectorAll('.stat .num');
@@ -2292,13 +2303,17 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   }
   async function loadDynamicContent(){
     let data;
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 6000);
     try{
-      const res = await fetch('content.json', {cache:'no-store'});
+      const res = await fetch('content.json', {cache:'no-store', signal:ctrl.signal});
       if(!res.ok) throw new Error('content.json yok');
       data = await res.json();
     }catch(err){
       console.warn('content.json yüklenemedi, gömülü varsayılan içerik gösteriliyor.', err);
       data = SITE_DATA;
+    }finally{
+      clearTimeout(timer);
     }
 
     // -- METİNLER (config) --
@@ -2428,7 +2443,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       partnersTrack.innerHTML += partnersTrack.innerHTML;
     }
   }
-  loadDynamicContent();
+  loadDynamicContent().then(revealVisible).catch(revealVisible);
 
   // ziyaretçi sayacı (oturumda bir kez artır, sayıyı göster)
   (function(){
