@@ -253,17 +253,30 @@ async function handleFormSubmit(request, env) {
   };
 
   try {
+    const origin = new URL(request.url).origin;
     const res = await fetch(`https://formsubmit.co/ajax/${toEmail}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': origin,
+        'Referer': origin + '/',
+        'User-Agent': 'Mozilla/5.0 (ADES-Worker)',
+      },
       body: JSON.stringify(payload),
     });
-    if (res.ok) {
-      return json({ ok:true });
-    }
-    let msg = 'FormSubmit HTTP ' + res.status;
-    try { const j = await res.json(); if (j && j.message) msg = j.message; } catch (e) {}
-    return json({ ok:false, error:msg }, 502);
+    // FormSubmit, hatada bile HTTP 200 (+ success:false) dönebilir. JSON gövdesine bak.
+    let ok = res.status >= 200 && res.status < 300;
+    let msg = '';
+    try {
+      const j = await res.json();
+      if (j) {
+        if (j.success === false || j.success === 'false') ok = false;
+        if (j.message) msg = j.message;
+      }
+    } catch (e) { /* boş gövde */ }
+    if (ok) return json({ ok:true });
+    return json({ ok:false, error: msg || ('FormSubmit HTTP ' + res.status) }, 502);
   } catch (e) {
     return json({ ok:false, error:String(e && e.message || e) }, 502);
   }

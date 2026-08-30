@@ -2617,7 +2617,9 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       headers: { 'Accept': 'application/json' }
     })
     .then(res=>{
-      if(!res.ok) throw new Error('Gönderim başarısız');
+      if(!res.ok) {
+        return res.json().then(j=>{ throw new Error((j && j.error) || 'Gönderim başarısız'); }).catch(e=>{ if(e && e.message) throw e; throw new Error('Gönderim başarısız'); });
+      }
       note.textContent = 'Başvurun bize ulaştı — kısa süre içinde dönüş yapacağız.';
       note.style.color = 'var(--gold)';
       note.classList.add('show');
@@ -2629,8 +2631,13 @@ document.querySelectorAll(".glitch-text").forEach(el => {
         goToStep(1);
       }, 4500);
     })
-    .catch(()=>{
-      note.textContent = 'Bir şeyler ters gitti, lütfen tekrar dene ya da doğrudan e-posta gönder.';
+    .catch((err)=>{
+      const m = (err && err.message) || 'Bir şeyler ters gitti.';
+      if(/aktivasyon|activation|aktive/i.test(m)) {
+        note.textContent = 'Form henüz aktif değil. Lütfen sahibine iletisim.adesmedia@gmail.com adresindeki onay mailindeki linke tıklamasını söyle.';
+      } else {
+        note.textContent = 'Bir şeyler ters gitti (' + m + '). Lütfen tekrar dene ya da doğrudan e-posta gönder.';
+      }
       note.style.color = '#ff7a7a';
       note.classList.add('show');
     })
@@ -2734,15 +2741,24 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       headers: { 'Accept': 'application/json' }
     })
     .then(res=>{
-      if(!res.ok) throw new Error('Gönderim başarısız');
+      if(!res.ok) {
+        return res.json().then(j=>{ throw new Error((j && j.error) || 'Gönderim başarısız'); }).catch(e=>{ if(e && e.message) throw e; throw new Error('Gönderim başarısız'); });
+      }
       const done = document.getElementById('reserveDone');
       if(done){ reserveForm.style.display = 'none'; done.classList.add('show'); }
       if(window.SFX) window.SFX.success();
     })
-    .catch(()=>{
+    .catch((err)=>{
       if(rbtn){ rbtn.disabled = false; rbtn.textContent = 'Randevu Talebi Gönder →'; }
+      const m = (err && err.message) || 'Bir şeyler ters gitti.';
       const note = reserveForm.querySelector('.reserve-note');
-      if(note){ note.textContent = 'Bir şeyler ters gitti. Lütfen doğrudan e-posta gönder: iletisim.adesmedia@gmail.com'; }
+      if(note){
+        if(/aktivasyon|activation|aktive/i.test(m)) {
+          note.textContent = 'Form henüz aktif değil. Lütfen iletisim.adesmedia@gmail.com adresindeki onay linkine tıklayın.';
+        } else {
+          note.textContent = 'Bir şeyler ters gitti (' + m + '). Lütfen doğrudan e-posta gönder: iletisim.adesmedia@gmail.com';
+        }
+      }
     });
   });
 
