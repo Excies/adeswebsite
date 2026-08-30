@@ -1535,7 +1535,8 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       <div class="reserve-form reveal">
         <h3>Rezervasyon Talebi</h3>
         <p class="reserve-sub">Aşağıdaki formu doldur, talebin mail kutumuzda.</p>
-        <form id="reserveForm" novalidate action="https://formsubmit.co/iletisim.adesmedia@gmail.com" method="POST">
+        <form id="reserveForm" novalidate action="/api/submit" method="POST">
+          <input type="hidden" name="_type" value="rezervasyon">
           <input type="hidden" name="_subject" value="Ades Medya - Rezervasyon Talebi">
           <input type="hidden" name="_template" value="table">
           <input type="hidden" name="_captcha" value="false">
@@ -1666,7 +1667,8 @@ document.querySelectorAll(".glitch-text").forEach(el => {
           <span data-label="4">Özet &amp; Gönder</span>
         </div>
 
-        <form id="applyForm" novalidate action="https://formsubmit.co/iletisim.adesmedia@gmail.com" method="POST">
+        <form id="applyForm" novalidate action="/api/submit" method="POST">
+          <input type="hidden" name="_type" value="basvuru">
           <input type="hidden" name="_subject" value="Ades Medya - Yeni Ekip Başvurusu">
           <input type="hidden" name="_template" value="table">
           <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
@@ -1878,7 +1880,10 @@ document.querySelectorAll(".glitch-text").forEach(el => {
 
   function applySiteConfig(){
     const applyForm = document.getElementById('applyForm');
-    if(applyForm) applyForm.action = `https://formsubmit.co/${SITE_CONFIG.contactEmail}`;
+    if(applyForm) applyForm.action = '/api/submit';
+
+    const reserveForm = document.getElementById('reserveForm');
+    if(reserveForm) reserveForm.action = '/api/submit';
 
     const mailLink = document.querySelector('footer a[href^="mailto:"]');
     if(mailLink){

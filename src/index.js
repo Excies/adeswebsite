@@ -210,6 +210,65 @@ async function handleIgFeed(request, env) {
   });
 }
 
+// ---------- POST /api/submit ----------
+// Rezervasyon ve Ekibe Katıl (başvuru) formları tarayıcıdan buraya gelir;
+// worker sunucu tarafında FormSubmit AJAX ucu üzerinden e-posta olarak
+// iletir. Böylece tarayıcıda CORS engeli oluşmaz ve e-postalar düşer.
+async function handleFormSubmit(request, env) {
+  const toEmail = env.CONTACT_EMAIL || 'iletisim.adesmedia@gmail.com';
+
+  let data;
+  try {
+    data = await request.formData();
+  } catch (e) {
+    return json({ ok:false, error:'Geçersiz form isteği.' }, 400);
+  }
+
+  const honey = String((data.get('_honey') || '').trim());
+  if (honey) {
+    return json({ ok:true, spam:true }); // bot tuzağı
+  }
+
+  const type = String(data.get('_type') || '');
+  const labels = {
+    rezervasyon: 'Ades Medya - Rezervasyon Talebi',
+    basvuru: 'Ades Medya - Yeni Ekip Başvurusu',
+  };
+  const subject = String(data.get('_subject') || labels[type] || 'Ades Medya - Yeni Form');
+
+  const fields = {};
+  const skip = new Set(['_subject','_template','_captcha','_honey','_type','_next','_autoresponse','_replyto']);
+  for (const [k, v] of data.entries()) {
+    if (skip.has(k)) continue;
+    fields[k] = typeof v === 'string' ? v : '';
+  }
+
+  const payload = {
+    board: toEmail,
+    _subject: subject,
+    _template: 'table',
+    _captcha: 'false',
+    _honey: '',
+    _datatable: fields,
+  };
+
+  try {
+    const res = await fetch(`https://formsubmit.co/ajax/${toEmail}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      return json({ ok:true });
+    }
+    let msg = 'FormSubmit HTTP ' + res.status;
+    try { const j = await res.json(); if (j && j.message) msg = j.message; } catch (e) {}
+    return json({ ok:false, error:msg }, 502);
+  } catch (e) {
+    return json({ ok:false, error:String(e && e.message || e) }, 502);
+  }
+}
+
 // ---------- ziyaretçi sayacı ----------
 async function handleVisit(request, env) {
   const key = 'visits';
@@ -236,6 +295,9 @@ export default {
     }
     if (path === '/api/visit' ) {
       return handleVisit(request, env);
+    }
+    if (path === '/api/submit' && request.method === 'POST') {
+      return handleFormSubmit(request, env);
     }
     if (path === '/content.json') {
       try {
