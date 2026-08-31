@@ -31,6 +31,7 @@ async function loadContent(env, request) {
   if (kv) {
     try { return JSON.parse(kv); } catch (e) { /* bozuksa assets'e düş */ }
   }
+  if (!env.ASSETS) return null;
   const r = await env.ASSETS.fetch(new URL('/content.json', request.url));
   if (r.ok) {
     try { return await r.json(); } catch (e) { /* yok */ }
@@ -348,7 +349,10 @@ export default {
     
     // Admin panel route - custom URL: /admin.rtw
     if (path === '/admin.rtw' || path === '/admin.rtw/') {
-      return env.ASSETS.fetch(new Request('/admin.html', request));
+      if (env.ASSETS) {
+        return env.ASSETS.fetch(new Request('/admin.html', request));
+      }
+      return json({ ok:false, error:'ASSETS binding tanımlı değil. Cloudflare Dashboard > Pages > Settings > Bindings kısmında ASSETS ekleyin.' }, 500);
     }
     
     // Honeypot: /admin and common admin paths - show plain text warning with IP
@@ -397,6 +401,9 @@ ADES Medya Guvenlik Sistemi`;
         }
       } catch (e) { /* KV bozuksa assets'e düş */ }
     }
-    return env.ASSETS.fetch(request);
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+    return new Response('ASSETS binding tanımlı değil. Cloudflare Dashboard > Pages > Settings > Bindings kısmında ASSETS ekleyin.', { status: 500 });
   },
 };
