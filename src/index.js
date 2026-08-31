@@ -294,11 +294,171 @@ async function handleVisit(request, env) {
   return json({ ok:true, visits:count }, 200);
 }
 
+// ---------- Admin auth endpoint ----------
+async function handleAdminAuth(request, env) {
+  if (request.method !== 'POST') {
+    return json({ ok:false, error:'Sadece POST kullanılır.' }, 405);
+  }
+  
+  const clientIp = request.headers.get('CF-Connecting-IP') || 
+                   request.headers.get('X-Forwarded-For') || 
+                   'unknown';
+  
+  let body;
+  try { body = await request.json(); } catch (e) { 
+    return json({ ok:false, error:'Geçersiz JSON isteği.' }, 400); 
+  }
+  
+  const password = body && body.password;
+  const correctPassword = env.ADMIN_PASSWORD || 'iu1818iu';
+  
+  if (password === correctPassword) {
+    return json({ ok:true, token: 'admin-authenticated' });
+  } else {
+    // Log failed attempt (in production, you'd store this in KV or log service)
+    console.warn(`[ADMIN AUTH FAILED] IP: ${clientIp}, Time: ${new Date().toISOString()}`);
+    return json({ ok:false, error:'Şifre hatalı!' }, 401);
+  }
+}
+
+// ---------- Admin check endpoint (for session validation) ----------
+async function handleAdminCheck(request, env) {
+  // In a real app, you'd validate a JWT or session token here
+  // For now, we'll just check if the request has the right header
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader === 'Bearer admin-authenticated') {
+    return json({ ok:true, authenticated: true });
+  }
+  return json({ ok:false, authenticated: false }, 401);
+}
+
 // ---------- ana fetch ----------
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    // Admin auth endpoints (backend only)
+    if (path === '/api/admin/auth' && request.method === 'POST') {
+      return handleAdminAuth(request, env);
+    }
+    if (path === '/api/admin/check') {
+      return handleAdminCheck(request, env);
+    }
+    
+    // Admin panel route - custom URL: /adMiN
+    if (path === '/adMiN' || path === '/adMiN/') {
+      return env.ASSETS.fetch(new Request('/admin.html', request));
+    }
+    
+    // Honeypot: /admin and common admin paths - show scary warning
+    const adminHoneypotPaths = ['/admin', '/admin/', '/administrator', '/administrator/', '/wp-admin', '/wp-admin/', '/login', '/login/'];
+    if (adminHoneypotPaths.includes(path)) {
+      const clientIp = request.headers.get('CF-Connecting-IP') || 
+                       request.headers.get('X-Forwarded-For') || 
+                       'unknown';
+      console.warn(`[HONEYPOT TRIGGERED] IP: ${clientIp} attempted to access: ${path} at ${new Date().toISOString()}`);
+      
+      return new Response(`
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Erişim Engellendi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #07100b;
+      color: #eef7f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      text-align: center;
+      max-width: 600px;
+      background: #0d1912;
+      border: 1px solid #22382c;
+      border-radius: 10px;
+      padding: 40px;
+    }
+    .warning-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    h1 {
+      font-size: 28px;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+      color: #ff5d5d;
+    }
+    .ip-info {
+      background: #101f16;
+      border: 1px solid #33513f;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 24px 0;
+      font-family: 'Consolas', monospace;
+      font-size: 14px;
+      color: #2fe88a;
+    }
+    .ip-label {
+      color: #9db8a6;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    p {
+      color: #9db8a6;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .scary-text {
+      color: #ff5d5d;
+      font-weight: 600;
+    }
+    .footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #22382c;
+      font-size: 12px;
+      color: #5c7768;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="warning-icon">⚠️</div>
+    <h1>ERİŞİM ENGELLENDİ</h1>
+    <p>Bu sayfa yönetici paneli <span class="scary-text">DEĞİLDİR</span>.</p>
+    <p>Yanlış bir URL denediniz. Bu girişim <span class="scary-text">KAYDEDİLDİ</span>.</p>
+    <div class="ip-info">
+      <div class="ip-label">IP Adresiniz Kaydedildi</div>
+      <div>${clientIp}</div>
+    </div>
+    <p>Güvenlik sistemlerimiz bu denemeyi tespit etti ve logladı.</p>
+    <p>Yetkiliyseniz, doğru yönetici panel URL'sini kullanın.</p>
+    <div class="footer">
+      ADES Medya Güvenlik Sistemi • ${new Date().toISOString()}
+    </div>
+  </div>
+</body>
+</html>
+      `, {
+        status: 403,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
+    }
 
     if (path === '/api/content' && request.method === 'POST') {
       return handleContentSave(request, env);

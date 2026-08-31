@@ -14,6 +14,7 @@
   ],
   "vars": {
     "GITHUB_REPO": "Excies/adeswebsite",
-    "GITHUB_BRANCH": "main"
+    "GITHUB_BRANCH": "main",
+    "ADMIN_PASSWORD": "iu1818iu"
   }
 }

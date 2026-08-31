@@ -217,15 +217,8 @@
         <li><b>İlk kurulum (tek seferlik):</b> Cloudflare Dashboard'da Pages projen için şu gizli değişkenleri ayarla (sunucuda <code>GITHUB_TOKEN</code> gizli olarak saklanır, sitede asla gözükmez):<br>
           <code>GITHUB_TOKEN</code> = GitHub kişisel erişim token'i (<b>repo</b> izni olmalı) · <code>GITHUB_REPO</code> = <i>sahip/repo</i> · <code>GITHUB_BRANCH</code> = <i>main</i></li>
         <li><b>Yedeklemek:</b> İstersen <b>💾 İndir</b> ile <code>content.json</code>'u bilgisayarına kaydedip "İçerik Yükle" ile geri yükleyebilirsin.</li>
-        <li><b>Şifre değiştir:</b> Aşağıdan panel şifreni değiştirebilirsin. (Not: statik sitede şifre sadece tarayıcıda korur; siteni herkes görebilir, panelin linkini paylaşma.)</li>
+        <li><b>Şifre yönetimi:</b> Panel şifresi artık sunucu tarafında (Cloudflare Pages Environment Variables) güvenle saklanıyor. Şifre değiştirmek için Cloudflare Dashboard > Pages > Settings > Environment Variables > ADMIN_PASSWORD değerini güncelleyin.</li>
       </ol>
-      <div class="card">
-        <h3>Panel Ayarları</h3>
-        <div class="formgrid">
-          <div class="col"><label>Yeni Şifre</label><input type="text" id="newPass" placeholder="Yeni şifre yaz"></div>
-          <div class="col" style="justify-content:flex-end"><button id="setPassBtn">Şifreyi Güncelle</button></div>
-        </div>
-      </div>
     </section>
   </main>
 
@@ -280,9 +273,8 @@
   };
 
   var LS_DATA = 'ades_admin_data';
-  var LS_PASS = 'ades_admin_pass';
   var LS_LOGIN = 'ades_admin_logged';
-  var pass = localStorage.getItem(LS_PASS) || 'ades2026';
+  // Şifre artık backend'de saklanıyor - frontend'de yok
   var data = JSON.parse(JSON.stringify(DEFAULTS));
 
   function mergeDeep(base, ext){
@@ -632,10 +624,33 @@
 
   // -- login --
   function showApp(){ $('loginScreen').classList.add('hidden'); $('app').classList.remove('hidden'); }
-  if(localStorage.getItem(LS_LOGIN) === '1') showApp();
+  if(localStorage.getItem(LS_LOGIN) === '1') { showApp(); init(); }
   $('loginBtn').addEventListener('click', function(){
-    if($('passInput').value === pass){ localStorage.setItem(LS_LOGIN,'1'); showApp(); init(); }
-    else toast('Şifre hatalı!');
+    var inputPass = $('passInput').value;
+    if(!inputPass){ toast('Şifre girin!'); return; }
+    $('loginBtn').disabled = true;
+    $('loginBtn').textContent = 'Giriş yapılıyor...';
+    fetch('/api/admin/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: inputPass })
+    }).then(function(r){ return r.json(); })
+    .then(function(j){
+      $('loginBtn').disabled = false;
+      $('loginBtn').textContent = 'Giriş';
+      if(j && j.ok){
+        localStorage.setItem(LS_LOGIN, '1');
+        showApp();
+        init();
+        $('passInput').value = '';
+      } else {
+        toast(j && j.error ? j.error : 'Şifre hatalı!');
+      }
+    }).catch(function(){
+      $('loginBtn').disabled = false;
+      $('loginBtn').textContent = 'Giriş';
+      toast('Bağlantı hatası!');
+    });
   });
   $('passInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('loginBtn').click(); });
 
@@ -743,16 +758,6 @@
     if(!confirm('Tüm değişiklikler silinip varsayılan içerik gelecek. Emin misin?')) return;
     localStorage.removeItem(LS_DATA);
     location.reload();
-  });
-
-  // -- change password --
-  $('setPassBtn').addEventListener('click', function(){
-    var np = $('newPass').value.trim();
-    if(np.length < 4){ toast('Şifre en az 4 karakter olmalı'); return; }
-    pass = np;
-    localStorage.setItem(LS_PASS, np);
-    $('newPass').value = '';
-    toast('Şifre güncellendi: ' + np);
   });
 
   if(localStorage.getItem(LS_LOGIN) === '1') init();
