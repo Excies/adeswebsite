@@ -295,7 +295,11 @@ async function handleVisit(request, env) {
   return json({ ok:true, visits:count }, 200);
 }
 
-// ---------- Admin auth endpoint ----------
+// ---------- Admin auth endpoint (brute-force korumalı) ----------
+const AUTH_MAX_ATTEMPTS = 5;        // bu kadar yanlış denemeden sonra
+const AUTH_WINDOW_MS = 5 * 60 * 1000; // 5 dakika içinde
+const AUTH_LOCK_MS = 15 * 60 * 1000;  // 15 dakika kilit
+
 async function handleAdminAuth(request, env) {
   if (request.method !== 'POST') {
     return json({ ok:false, error:'Sadece POST kullanılır.' }, 405);
@@ -304,7 +308,30 @@ async function handleAdminAuth(request, env) {
   const clientIp = request.headers.get('CF-Connecting-IP') || 
                    request.headers.get('X-Forwarded-For') || 
                    'unknown';
-  
+  const ipKey = 'brute:' + clientIp;
+
+  // KV varsa deneme sayacını oku (yoksa kaydı boş say)
+  let rec = null;
+  if (env.CONTENT) {
+    try {
+      const raw = await env.CONTENT.get(ipKey);
+      if (raw) rec = JSON.parse(raw);
+    } catch (e) { /* yok */ }
+  }
+
+  const now = Date.now();
+
+  // Aktif bir kilit penceresi varsa reddet
+  if (rec && rec.lockUntil && now < rec.lockUntil) {
+    const m = Math.ceil((rec.lockUntil - now) / 1000 / 60);
+    return json({ ok:false, error:`Çok fazla hatalı deneme. ${Math.max(1,m)} dk sonra tekrar dene.` }, 429);
+  }
+
+  // 5 dakikalık pencere dışına taşmışsa sayacı sıfırla
+  if (rec && rec.start && (now - rec.start > AUTH_WINDOW_MS)) {
+    rec = null;
+  }
+
   let body;
   try { body = await request.json(); } catch (e) { 
     return json({ ok:false, error:'Geçersiz JSON isteği.' }, 400); 
@@ -314,12 +341,35 @@ async function handleAdminAuth(request, env) {
   const correctPassword = env.ADMIN_PASSWORD || 'iu1818iu';
   
   if (password === correctPassword) {
+    // Başarılı giriş → sayaçı temizle
+    if (env.CONTENT) {
+      try { await env.CONTENT.delete(ipKey); } catch (e) { /* yok */ }
+    }
     return json({ ok:true, token: 'admin-authenticated' });
-  } else {
-    // Log failed attempt (in production, you'd store this in KV or log service)
-    console.warn(`[ADMIN AUTH FAILED] IP: ${clientIp}, Time: ${new Date().toISOString()}`);
-    return json({ ok:false, error:'Şifre hatalı!' }, 401);
   }
+
+  // Hatalı deneme → sayacı artır
+  const count = (rec ? rec.count : 0) + 1;
+  let lockUntil = null;
+  if (count >= AUTH_MAX_ATTEMPTS) {
+    lockUntil = now + AUTH_LOCK_MS;
+    console.warn(`[ADMIN BRUTE LOCK] IP: ${clientIp}, deneme: ${count}, kilit: ${new Date(lockUntil).toISOString()}`);
+  } else {
+    console.warn(`[ADMIN AUTH FAILED] IP: ${clientIp}, deneme: ${count}/${AUTH_MAX_ATTEMPTS}, Time: ${new Date().toISOString()}`);
+  }
+
+  if (env.CONTENT) {
+    try {
+      await env.CONTENT.put(ipKey, JSON.stringify({ count, start: rec ? rec.start : now, lockUntil }), {
+        expirationTtl: Math.ceil((AUTH_LOCK_MS || AUTH_WINDOW_MS) / 1000),
+      });
+    } catch (e) { /* KV yazılamazsa yine de yanıt ver */ }
+  }
+
+  if (lockUntil) {
+    return json({ ok:false, error:'Çok fazla hatalı deneme. 15 dakika kilitlendi.' }, 429);
+  }
+  return json({ ok:false, error:'Şifre hatalı!' }, 401);
 }
 
 // ---------- Admin check endpoint (for session validation) ----------
@@ -347,16 +397,9 @@ export default {
       return handleAdminCheck(request, env);
     }
     
-    // Admin panel route - custom URL: /admin.rtw
-    if (path === '/admin.rtw' || path === '/admin.rtw/') {
-      if (env.ASSETS) {
-        return env.ASSETS.fetch(new Request('/admin.html', request));
-      }
-      return json({ ok:false, error:'ASSETS binding tanımlı değil. Cloudflare Dashboard > Pages > Settings > Bindings kısmında ASSETS ekleyin.' }, 500);
-    }
     
-    // Honeypot: /admin and common admin paths - show plain text warning with IP
-    const adminHoneypotPaths = ['/admin', '/admin/', '/administrator', '/administrator/', '/wp-admin', '/wp-admin/', '/login', '/login/'];
+    // Honeypot: /admin.html and common admin paths - show plain text warning with IP
+    const adminHoneypotPaths = ['/admin.html', '/admin', '/admin/', '/administrator', '/administrator/', '/wp-admin', '/wp-admin/', '/login', '/login/'];
     if (adminHoneypotPaths.includes(path)) {
       const clientIp = request.headers.get('CF-Connecting-IP') || 
                        request.headers.get('X-Forwarded-For') || 
