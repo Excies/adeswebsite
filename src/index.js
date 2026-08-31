@@ -346,12 +346,12 @@ export default {
       return handleAdminCheck(request, env);
     }
     
-    // Admin panel route - custom URL: /adMiN
-    if (path === '/adMiN' || path === '/adMiN/') {
+    // Admin panel route - custom URL: /admin.rtw
+    if (path === '/admin.rtw' || path === '/admin.rtw/') {
       return env.ASSETS.fetch(new Request('/admin.html', request));
     }
     
-    // Honeypot: /admin and common admin paths - show scary warning
+    // Honeypot: /admin and common admin paths - show plain text warning with IP
     const adminHoneypotPaths = ['/admin', '/admin/', '/administrator', '/administrator/', '/wp-admin', '/wp-admin/', '/login', '/login/'];
     if (adminHoneypotPaths.includes(path)) {
       const clientIp = request.headers.get('CF-Connecting-IP') || 
@@ -359,104 +359,21 @@ export default {
                        'unknown';
       console.warn(`[HONEYPOT TRIGGERED] IP: ${clientIp} attempted to access: ${path} at ${new Date().toISOString()}`);
       
-      return new Response(`
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Erişim Engellendi</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #07100b;
-      color: #eef7f0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      text-align: center;
-      max-width: 600px;
-      background: #0d1912;
-      border: 1px solid #22382c;
-      border-radius: 10px;
-      padding: 40px;
-    }
-    .warning-icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-    h1 {
-      font-size: 28px;
-      letter-spacing: 0.06em;
-      margin-bottom: 16px;
-      color: #ff5d5d;
-    }
-    .ip-info {
-      background: #101f16;
-      border: 1px solid #33513f;
-      border-radius: 6px;
-      padding: 20px;
-      margin: 24px 0;
-      font-family: 'Consolas', monospace;
-      font-size: 14px;
-      color: #2fe88a;
-    }
-    .ip-label {
-      color: #9db8a6;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
-    p {
-      color: #9db8a6;
-      line-height: 1.7;
-      margin-bottom: 16px;
-    }
-    .scary-text {
-      color: #ff5d5d;
-      font-weight: 600;
-    }
-    .footer {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #22382c;
-      font-size: 12px;
-      color: #5c7768;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="warning-icon">⚠️</div>
-    <h1>ERİŞİM ENGELLENDİ</h1>
-    <p>Bu sayfa yönetici paneli <span class="scary-text">DEĞİLDİR</span>.</p>
-    <p>Yanlış bir URL denediniz. Bu girişim <span class="scary-text">KAYDEDİLDİ</span>.</p>
-    <div class="ip-info">
-      <div class="ip-label">IP Adresiniz Kaydedildi</div>
-      <div>${clientIp}</div>
-    </div>
-    <p>Güvenlik sistemlerimiz bu denemeyi tespit etti ve logladı.</p>
-    <p>Yetkiliyseniz, doğru yönetici panel URL'sini kullanın.</p>
-    <div class="footer">
-      ADES Medya Güvenlik Sistemi • ${new Date().toISOString()}
-    </div>
-  </div>
-</body>
-</html>
-      `, {
+      const warningText = `ERISIM ENGELLENDI
+Bu sayfa yonetici paneli DEGILDIR.
+Yanlis bir URL denediniz. Bu girisim KAYDEDILDI.
+
+IP Adresiniz Kaydedildi: ${clientIp}
+Zaman: ${new Date().toISOString()}
+
+Guvenlik sistemlerimiz bu denemeyi tespit etti ve logladi.
+Yetkiliyseniz, dogru yonetici panel URL'sini kullanin.
+
+ADES Medya Guvenlik Sistemi`;
+      
+      return new Response(warningText, {
         status: 403,
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
     }
 
