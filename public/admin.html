@@ -137,7 +137,7 @@
       <button data-tab="istatistik">İstatistikler</button>
       <button data-tab="galeri">Galeri</button>
       <button data-tab="igfeed">Instagram</button>
-      <button data-tab="haberler">İşlerimiz</button>
+      <button data-tab="haberler">Haberler</button>
       <button data-tab="ekip">Ekip</button>
       <button data-tab="referanslar">Referanslar</button>
       <button data-tab="partnerler">Partnerler</button>
@@ -180,10 +180,10 @@
     </section>
 
     <section class="pane" data-pane="haberler">
-      <h2>İşlerimiz</h2>
-      <p class="desc">Sitedeki "İşlerimiz" (eski Sahne notları) bölümü. Her kart kapak görseli + başlık + galeri linki (Google Drive / Google Fotoğraflar) içerir. Kartlar yeni sekmede dış linke gider.</p>
+      <h2>Haberler / Blog</h2>
+      <p class="desc">Sitedeki "Sahne notları" bölümü. Haber ekle, başlık/metin/görsel düzenle, link ekle ya da sil.</p>
       <div class="card" id="blogCard"></div>
-      <div class="add-bar"><button class="primary" id="blogAdd">+ İş Ekle</button></div>
+      <div class="add-bar"><button class="primary" id="blogAdd">+ Haber Ekle</button></div>
     </section>
 
     <section class="pane" data-pane="ekip">
@@ -257,7 +257,7 @@
       aboutText2: 'Konferanslardan kurumsal etkinliklere, MUN organizasyonlarından bireysel projelere kadar farklı ölçekte çalışmalar gerçekleştiriyor; kaliteli içerik, yaratıcı fikirler ve güçlü görsel deneyimlerle markaların hikâyelerini etkili bir şekilde anlatmalarına yardımcı oluyoruz.',
       galleryTitle: 'Alandan kareler',
       teamTitle: 'Objektifin arkasındakiler',
-      blogTitle: 'İşlerimiz',
+      blogTitle: 'Sahne notları',
       testiEyebrow: 'Organizatörler Ne Diyor',
       testiTitle: 'Sahne bizi tanıyor',
       covers: {
@@ -499,7 +499,7 @@
     g2.appendChild(fieldRow('Ekip başlığı', 'config.teamTitle', cfg.teamTitle));
     g2.appendChild(fieldRow('Hakkımızda metni 1', 'config.aboutText1', cfg.aboutText1, {type:'textarea', full:true}));
     g2.appendChild(fieldRow('Hakkımızda metni 2', 'config.aboutText2', cfg.aboutText2, {type:'textarea', full:true}));
-    g2.appendChild(fieldRow('İşlerimiz başlığı', 'config.blogTitle', cfg.blogTitle));
+    g2.appendChild(fieldRow('Haberler başlığı', 'config.blogTitle', cfg.blogTitle));
     g2.appendChild(fieldRow('Yorumlar etiketi', 'config.testiEyebrow', cfg.testiEyebrow));
     g2.appendChild(fieldRow('Yorumlar başlığı', 'config.testiTitle', cfg.testiTitle));
     g2.appendChild(fieldRow('Dolu Tarihler (YYYY-AA-GG, virgülle)', 'config.blockedDates', (cfg.blockedDates||[]).join(', '), {type:'textarea', full:true}));
@@ -548,11 +548,14 @@
   function renderBlog(){
     listItem($('blogCard'), 'blog',
       [
-        {key:'image',label:'Kapak Görseli',type:'image',full:true},
+        {key:'image',label:'Görsel',type:'image',full:true},
         {key:'title',label:'Başlık'},
-        {key:'link',label:'Galeri Linki (Drive / Google Fotoğraflar)',full:true}
+        {key:'tag',label:'Etiket'},
+        {key:'date',label:'Tarih'},
+        {key:'link',label:'Link (yoksa # bırak)'},
+        {key:'excerpt',label:'Özet metin',type:'textarea',full:true}
       ],
-      function(it){ return it.title || 'Yeni iş'; });
+      function(it){ return it.title || 'Yeni haber'; });
   }
 
   function renderTeam(){
@@ -664,7 +667,7 @@
   }
   $('galleryAdd').addEventListener('click', function(){ addItem('gallery', {image:'',title:'',meta:'',category:'',size:''}); toast('Galeriye boş görsel eklendi — bilgileri doldur.'); });
   $('igAdd').addEventListener('click', function(){ addItem('igfeed', {link:'',image:'',likes:'',comments:''}); toast('Kare eklendi — Instagram paylaşım linkini yapıştır.'); });
-  $('blogAdd').addEventListener('click', function(){ addItem('blog', {image:'',title:'',link:''}); });
+  $('blogAdd').addEventListener('click', function(){ addItem('blog', {image:'',tag:'',date:'',title:'',excerpt:'',link:'#'}); });
   $('teamAdd').addEventListener('click', function(){ addItem('team', {image:'',name:'',rank:'Üye',group:'Design&IT',role:'',instagram:''}); });
   $('testiAdd').addEventListener('click', function(){ addItem('testimonials', {quote:'',title:''}); });
   $('partnerAdd').addEventListener('click', function(){ addItem('partners', {name:''}); });
