@@ -138,6 +138,7 @@
       <button data-tab="galeri">Galeri</button>
       <button data-tab="igfeed">Instagram</button>
       <button data-tab="haberler">Haberler</button>
+      <button data-tab="islerimiz">İşlerimiz</button>
       <button data-tab="ekip">Ekip</button>
       <button data-tab="referanslar">Referanslar</button>
       <button data-tab="partnerler">Partnerler</button>
@@ -184,6 +185,13 @@
       <p class="desc">Sitedeki "Sahne notları" bölümü. Haber ekle, başlık/metin/görsel düzenle, link ekle ya da sil.</p>
       <div class="card" id="blogCard"></div>
       <div class="add-bar"><button class="primary" id="blogAdd">+ Haber Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="islerimiz">
+      <h2>İşlerimiz</h2>
+      <p class="desc">Sitedeki "İşlerimiz" portföy bölümü. Her kart kapak görseli + başlık + galeri linki (Google Drive / Google Fotoğraflar) içerir. Kartlar yeni sekmede dış linke gider.</p>
+      <div class="card" id="islerimizCard"></div>
+      <div class="add-bar"><button class="primary" id="islerimizAdd">+ İş Ekle</button></div>
     </section>
 
     <section class="pane" data-pane="ekip">
@@ -274,6 +282,7 @@
     gallery: [],
     igfeed: [],
     blog: [],
+    islerimiz: [],
     team: [],
     testimonials: [],
     partners: [],
@@ -558,6 +567,16 @@
       function(it){ return it.title || 'Yeni haber'; });
   }
 
+  function renderIslerimiz(){
+    listItem($('islerimizCard'), 'islerimiz',
+      [
+        {key:'image',label:'Kapak Görseli',type:'image',full:true},
+        {key:'title',label:'Başlık'},
+        {key:'link',label:'Galeri Linki (Drive / Google Fotoğraflar)',full:true}
+      ],
+      function(it){ return it.title || 'Yeni iş'; });
+  }
+
   function renderTeam(){
     listItem($('teamCard'), 'team',
       [
@@ -593,6 +612,7 @@
     renderGallery();
     renderIg();
     renderBlog();
+    renderIslerimiz();
     renderTeam();
     renderTesti();
     renderPartners();
@@ -668,6 +688,7 @@
   $('galleryAdd').addEventListener('click', function(){ addItem('gallery', {image:'',title:'',meta:'',category:'',size:''}); toast('Galeriye boş görsel eklendi — bilgileri doldur.'); });
   $('igAdd').addEventListener('click', function(){ addItem('igfeed', {link:'',image:'',likes:'',comments:''}); toast('Kare eklendi — Instagram paylaşım linkini yapıştır.'); });
   $('blogAdd').addEventListener('click', function(){ addItem('blog', {image:'',tag:'',date:'',title:'',excerpt:'',link:'#'}); });
+  $('islerimizAdd').addEventListener('click', function(){ addItem('islerimiz', {image:'',title:'',link:''}); });
   $('teamAdd').addEventListener('click', function(){ addItem('team', {image:'',name:'',rank:'Üye',group:'Design&IT',role:'',instagram:''}); });
   $('testiAdd').addEventListener('click', function(){ addItem('testimonials', {quote:'',title:''}); });
   $('partnerAdd').addEventListener('click', function(){ addItem('partners', {name:''}); });

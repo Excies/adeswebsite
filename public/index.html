@@ -1495,42 +1495,14 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   </div>
 </section>
 
-<!-- İŞLERİMİZ (hardcoded — KV'dan bağımsız) -->
+<!-- İŞLERİMİZ (admin panelden yönetiliyor) -->
 <section class="islerimiz" id="islerimiz">
   <div class="wrap">
     <div class="islerimiz-head reveal">
       <div class="eyebrow">Portföy</div>
       <h2>İşlerimiz</h2>
     </div>
-    <div class="islerimiz-grid reveal">
-
-      <!--
-        HER KART: href'i Google Drive / Google Fotoğraflar linkiyle değiştir.
-        src kapak görselini, alt ve başlık metnini güncelle.
-        Yeni kart eklemek için bir <a> bloğunu kopyala.
-      -->
-
-      <a class="islerimiz-card" href="https://drive.google.com/" target="_blank" rel="noopener">
-        <div class="islerimiz-cover">
-          <img loading="lazy" src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=800&auto=format&fit=crop" alt="Konser çekimi">
-        </div>
-        <div class="islerimiz-info">
-          <h3>Nefes Festival</h3>
-          <span class="islerimiz-link">Galeriyi Aç <span>→</span></span>
-        </div>
-      </a>
-
-      <a class="islerimiz-card" href="https://photos.google.com/" target="_blank" rel="noopener">
-        <div class="islerimiz-cover">
-          <img loading="lazy" src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=800&auto=format&fit=crop" alt="Canlı performans">
-        </div>
-        <div class="islerimiz-info">
-          <h3>Gece Konseri</h3>
-          <span class="islerimiz-link">Galeriyi Aç <span>→</span></span>
-        </div>
-      </a>
-
-    </div>
+    <div class="islerimiz-grid reveal" id="islerimizGrid"></div>
   </div>
 </section>
 
@@ -2147,7 +2119,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   // referans, haber...) anında görünür yap — observer'ın boşken bağlantıyı
   // koparması durumunda bile bölüm boş görünmesin.
   function revealLoaded(){
-    ['stats','gridGallery','teamGrid','testiGrid','blogGrid','igEmbedWrap','partnersTrack'].forEach(id=>{
+    ['stats','gridGallery','teamGrid','testiGrid','blogGrid','islerimizGrid','igEmbedWrap','partnersTrack'].forEach(id=>{
       const el = document.getElementById(id);
       if(el && el.children.length){ el.classList.add('in'); io.unobserve(el); }
     });
@@ -2310,6 +2282,11 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     ],
     blog: [
       {image:'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=800&auto=format&fit=crop', tag:'Festival', date:'12 Temmuz 2026', title:'Nefes Festival\'de üç gün, altı sahne', excerpt:'Bu yıl festivalin ana ve yan sahnelerinde çektiğimiz kareler ve sahne arkasından notlar.', link:'#'}
+    ],
+    islerimiz: [
+      {image:'https://photos.google.com/share/AF1QipOErsQ7vBHqQB-r6IV1S2kinRi9QRArXpwVZJ90KDYMTFM8yAU_MeslbG8Wv_v40w/photo/AF1QipNPosYqnviDz1MIXO01EEYRVpp5NPyDnbupz6LY?key=bHB4NkN0d0w2Unh2WHR5aGRQWVFtTUVWN1BFLVlR', title:'ADES x ANKAYAZ', link:'https://photos.app.goo.gl/zDjugJV9oYHEn2ZH8'},
+      {image:'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=800&auto=format&fit=crop', title:'Nefes Festival', link:'https://drive.google.com/'},
+      {image:'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=800&auto=format&fit=crop', title:'Gece Konseri', link:'https://photos.google.com/'}
     ],
     igfeed: [
       {image:'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=500&auto=format&fit=crop', likes:'482', comments:'21'},
@@ -2516,6 +2493,21 @@ document.querySelectorAll(".glitch-text").forEach(el => {
           </div>
         </a>`).join('');
       blogGrid.querySelectorAll('.wipe').forEach(el=>wio.observe(el));
+    }
+
+    // İŞLERİMİZ (admin panelden yönetiliyor)
+    const islerimizGrid = document.getElementById('islerimizGrid');
+    if(islerimizGrid && Array.isArray(data.islerimiz)){
+      islerimizGrid.innerHTML = data.islerimiz.map(w=>`
+        <a class="islerimiz-card" href="${escapeHtml(w.link||'#')}" target="_blank" rel="noopener">
+          <div class="islerimiz-cover">
+            <img loading="lazy" src="${escapeHtml(w.image||'')}" alt="${escapeHtml(w.title||'')}">
+          </div>
+          <div class="islerimiz-info">
+            <h3>${escapeHtml(w.title||'')}</h3>
+            <span class="islerimiz-link">Galeriyi Aç <span>→</span></span>
+          </div>
+        </a>`).join('');
     }
 
     // INSTAGRAM PROFİL EMBEDİ — kullanıcı adını struct üzerinden güncelle
