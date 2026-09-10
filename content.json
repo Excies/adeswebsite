@@ -11,7 +11,7 @@
     "aboutText2": "Konferanslardan kurumsal etkinliklere, MUN organizasyonlarından bireysel projelere kadar farklı ölçekte çalışmalar gerçekleştiriyor; kaliteli içerik, yaratıcı fikirler ve güçlü görsel deneyimlerle markaların hikâyelerini etkili bir şekilde anlatmalarına yardımcı oluyoruz.",
     "galleryTitle": "Alandan kareler",
     "teamTitle": "Objektifin arkasındakiler",
-    "blogTitle": "Sahne notları",
+    "blogTitle": "İşlerimiz",
     "testiEyebrow": "Organizatörler Ne Diyor",
     "testiTitle": "Sahne bizi tanıyor",
     "covers": {
@@ -82,7 +82,18 @@
   ],
   "testimonials": [],
   "partners": [],
-  "blog": [],
+  "blog": [
+    {
+      "image": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=800&auto=format&fit=crop",
+      "title": "Nefes Festival",
+      "link": "https://drive.google.com/"
+    },
+    {
+      "image": "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=800&auto=format&fit=crop",
+      "title": "Konser Çekimi",
+      "link": "https://photos.google.com/"
+    }
+  ],
   "igfeed": [
     {
       "link": "https://www.instagram.com/p/DbifbB-IuCI/",
