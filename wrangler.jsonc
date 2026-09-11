@@ -16,4 +16,13 @@
     "GITHUB_REPO": "Excies/adeswebsite",
     "GITHUB_BRANCH": "main"
   }
+  // OPSİYONEL — başvuru/rezervasyon e-postalarını FormSubmit yerine
+  // Cloudflare'ın kendi e-posta kanalından (güvenilir, limit yok) göndermek
+  // için Cloudflare Dashboard'da "Email Service / Email Routing"i açtıktan
+  // sonra aşağıdaki binding'i ekle. Kurulmayana kadar kod otomatik olarak
+  // FormSubmit'i kullanır, hiçbir şey bozulmaz.
+  //
+  // "send_email": [
+  //   { "name": "SEND_EMAIL" }
+  // ]
 }

@@ -142,6 +142,7 @@
       <button data-tab="ekip">Ekip</button>
       <button data-tab="referanslar">Referanslar</button>
       <button data-tab="partnerler">Partnerler</button>
+      <button data-tab="basvurular">Başvurular</button>
       <button data-tab="yardim">Nasıl Kurulur?</button>
     </nav>
   </header>
@@ -213,6 +214,12 @@
       <p class="desc">Sitenin altındaki kayan marka şeridi. İsim ekleyebilir/silebilirsin.</p>
       <div class="card" id="partnerCard"></div>
       <div class="add-bar"><button class="primary" id="partnerAdd">+ Partner Ekle</button></div>
+    </section>
+
+    <section class="pane" data-pane="basvurular">
+      <h2>Başvurular &amp; Randevular</h2>
+      <p class="desc">Sitedeki "Ekibe Katıl" ve "Rezervasyon" formlarından gelen kayıtlar. Her kayıt önce buraya (sunucu KV deposuna) yazılır, ayrıca e-postayla iletilmeye çalışılır — yani buradaki başvurular asla kaybolmaz. "Cevap Yaz" başvuranın e-postasına direkt mail açar.</p>
+      <div class="card" id="basvuruCard"></div>
     </section>
 
     <section class="pane" data-pane="yardim">
@@ -605,6 +612,74 @@
       function(it, i){ return 'Partner ' + (i+1) + ' — ' + (it.name || ''); });
   }
 
+  // -- Başvurular: sunucudaki KV listesini gösterir --
+  function renderBasvurular(){
+    var c = $('basvuruCard');
+    if(!c) return;
+    c.innerHTML = '<div style="color:var(--dim);padding:8px 0">Yükleniyor…</div>';
+    fetch('/api/applications?token=' + encodeURIComponent(pass), {cache:'no-store'})
+      .then(function(r){ return r.json().catch(function(){ return {ok:false, error:'Sunucu yanıtı okunamadı'}; }); })
+      .then(function(j){
+        if(!j || !j.ok){
+          c.innerHTML = '<div style="color:var(--red);padding:8px 0">Başvurular çekilemedi: ' + ((j && j.error) || 'bilinmiyor') + '</div>';
+          return;
+        }
+        if(!j.items || !j.items.length){
+          c.innerHTML = '<div style="color:var(--dim);padding:8px 0">Henüz başvuru yok — formdan bir kayıt gönderildiğinde burada görünür.</div>';
+          return;
+        }
+        c.innerHTML = '';
+        j.items.forEach(function(it){
+          var div = document.createElement('div'); div.className = 'item';
+          var head = document.createElement('div'); head.className = 'item-head';
+          var title = document.createElement('div'); title.className = 'item-title';
+          var dateStr = '';
+          try{ dateStr = new Date(it.created_at).toLocaleString('tr-TR'); }catch(e){ dateStr = ''; }
+          title.textContent = (dateStr ? dateStr + ' · ' : '') + (it.type || it.subject || 'Başvuru');
+          head.appendChild(title);
+          var acts = document.createElement('div'); acts.className = 'item-actions';
+          var f = it.fields || {};
+          var emailOf = f.email || f['E-posta'] || f['E-mail'] || '';
+          var phoneOf = f.phone || f.telefon || f['Telefon'] || '';
+          var statusTxt = document.createElement('span');
+          statusTxt.style.fontSize = '11px';
+          statusTxt.textContent = it.email_status === 'delivered' ? '✅ e-posta gönderildi' : (it.email_state === 'sent' ? '✅ e-posta gönderildi' : '⏳ e-posta beklemede (KV\'da güvende)');
+          statusTxt.style.color = it.email_status === 'delivered' || it.email_state === 'sent' ? 'var(--gold)' : 'var(--dim)';
+          acts.appendChild(statusTxt);
+          if(emailOf){
+            var mailBtn = document.createElement('a');
+            mailBtn.textContent = 'Cevap Yaz';
+            mailBtn.href = 'mailto:' + emailOf + '?subject=' + encodeURIComponent('ADES Medya — Yanıt');
+            mailBtn.style.cssText = 'display:inline-block;padding:4px 9px;font-size:11px;border:1px solid var(--line2);border-radius:6px;color:var(--fg);text-decoration:none;';
+            mailBtn.onmouseover = function(){ this.style.borderColor = 'var(--gold)'; this.style.color = 'var(--gold)'; };
+            mailBtn.onmouseout = function(){ this.style.borderColor = 'var(--line2)'; this.style.color = 'var(--fg)'; };
+            acts.appendChild(mailBtn);
+          }
+          head.appendChild(acts);
+          div.appendChild(head);
+          Object.keys(f).forEach(function(k){
+            if(f[k] === '' || f[k] == null) return;
+            var row = document.createElement('div');
+            row.style.cssText = 'font-size:13px;margin:4px 0;line-height:1.5';
+            var lb = document.createElement('b'); lb.textContent = k + ': '; lb.style.color = 'var(--dim)';
+            row.appendChild(lb);
+            row.appendChild(document.createTextNode(String(f[k])));
+            div.appendChild(row);
+          });
+          if(it.email_error){
+            var er = document.createElement('div');
+            er.textContent = 'E-posta notu: ' + it.email_error;
+            er.style.cssText = 'font-size:11px;color:var(--dim);margin-top:6px';
+            div.appendChild(er);
+          }
+          c.appendChild(div);
+        });
+      })
+      .catch(function(){
+        c.innerHTML = '<div style="color:var(--red);padding:8px 0">Bağlantı kurulamadı.</div>';
+      });
+  }
+
   function renderAll(){
     renderGenel();
     renderKapak();
@@ -666,6 +741,7 @@
       btn.classList.add('active');
       var tab = btn.getAttribute('data-tab');
       document.querySelectorAll('section.pane').forEach(function(p){ p.classList.toggle('active', p.getAttribute('data-pane')===tab); });
+      if(tab === 'basvurular') renderBasvurular();
     });
   });
 

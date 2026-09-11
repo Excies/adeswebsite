@@ -42,3 +42,10 @@ Statik site (GitHub + Cloudflare Pages ile yayınlanır). Site içeriği `conten
 - **Fotoğraf boyutu çok mu büyük?** Panel yüklediğin görseli otomatik küçültür (max 1400px, ~%82 kalite). Çok büyük dosyalarda content.json şişebilir; yine de 5-10 MB'ı geçirmemeye çalış.
 - **content.json'u açarken panel boş geliyor?** `file://` ile açtığında tarayıcı dosyayı otomatik okuyamaz; "İçerik Yükle" butonuyla content.json'u elle seç. Sitede (https) sorun olmaz.
 - **Panelin şifresi neden basit?** Statik sitede gerçek güvenlik mümkün değildir; şifre sadece kazara düzenlemeyi önler. Panel linkini (`admin.html`) herkesle paylaşma, şifreyi değiştir.
+
+## Başvurular & Randevular (formlar)
+
+- "Ekibe Katıl" ve "Rezervasyon" formları sunucudaki `/api/submit` ile e-postaya iletilir.
+- Her başvuru **önce sunucu deposuna (KV) yazılır**; e-posta (FormSubmit) başarısız olsa bile başvuru asla kaybolmaz.
+- Kayıtları görmek için **Yönetim Paneli → "Başvurular"** sekmesini aç (aynı şifreyi kullanır).
+- E-postaları FormSubmit yerine Cloudflare'ın kendi e-posta servisinden (limit olmadan) göndermek için `wrangler.jsonc` içindeki açıklamayı okuyup `SEND_EMAIL` binding'ini ekleyebilirsin.

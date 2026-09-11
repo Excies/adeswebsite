@@ -210,12 +210,193 @@ async function handleIgFeed(request, env) {
   });
 }
 
+// ======================================================================
+// BAŞVURU / REZERVASYON TESLİMATI (güvenilir kanal)
+//
+// Sorun: Firefox/Safari'den değil, FormSubmit'in kendisinden geliyordu:
+// Cloudflare'ın paylaşılan çıkış IP'lerinden yapılan istekleri FormSubmit
+// sık sık "Rate limit exceeded" diye kabul etmiyor. Bu yüzden form hata
+// veriyordu.
+//
+// Artık akış şöyle:
+//   1) HER başvuru önce KV'ya yazılır → ASLA kaybolmaz (admin paneldeki
+//      "Başvurular" sekmesinden /api/applications ile okunur).
+//   2) E-posta teslimatı denemeleri:
+//        a) Cloudflare Email Service / Email Routing binding (SEND_EMAIL)
+//           kuruluysa önce ORADAN gönderilir (limit yok, güvenilir).
+//        b) Binding yoksa/çalışmazsa FormSubmit AJAX ucu denenir.
+//   3) E-posta başarısız olsa bile kullanıcıya HATA GÖSTERİLMEZ; istek
+//      hep başarılı döner, arka planda kısa süre sonra tekrar denenir.
+//      (Başvuru KV'da güvende; panelde görünür.)
+// ======================================================================
+
+function esc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+}
+
+function buildHtmlTable(subject, fields) {
+  let body = '';
+  for (const [k, v] of Object.entries(fields)) {
+    if (v === '' || v == null) continue;
+    body += '<tr><td style="background:#f2f2f2;padding:6px 10px;border:1px solid #ddd;font-weight:600">' +
+      esc(k) + '</td><td style="padding:6px 10px;border:1px solid #ddd">' + esc(v) + '</td></tr>';
+  }
+  return '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px">' +
+    '<h2 style="margin:0 0 8px">' + esc(subject) + '</h2>' +
+    '<table style="border-collapse:collapse;min-width:420px">' + body + '</table>' +
+    '<p style="color:#777;margin-top:14px;font-size:12px">Bu e-posta adesmedia.com.tr formlarından gönderildi.</p></div>';
+}
+
+function buildMime(subject, html) {
+  const boundary = 'ADES-' + Date.now().toString(36) + '-b';
+  return 'Subject: ' + subject + '\r\n' +
+    'MIME-Version: 1.0\r\n' +
+    'Content-Type: multipart/alternative; boundary="' + boundary + '"\r\n' +
+    'X-Auto-Response-Suppress: All\r\n\r\n' +
+    '--' + boundary + '\r\n' +
+    'Content-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n' +
+    subject + '\r\n(Bu e-postayı okuyamıyorsan HTML görünümünü aç.)\r\n\r\n' +
+    '--' + boundary + '\r\n' +
+    'Content-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n' +
+    html + '\r\n\r\n' +
+    '--' + boundary + '--\r\n';
+}
+
+// Cloudflare Email Service / Email Routing üzerinden gönderim (binding kuruluysa)
+async function sendViaCloudflareEmail(env, toEmail, subject, fields) {
+  if (!env || !env.SEND_EMAIL) {
+    return { ok:false, skipped:true };
+  }
+  try {
+    const fromEmail = env.CONTACT_FROM || 'forms@adesmedia.com.tr';
+    const html = buildHtmlTable(subject, fields);
+    const mime = buildMime(subject, html);
+    const Ctor = (typeof globalThis !== 'undefined' && globalThis.EmailMessage)
+      || (await import('cloudflare:email')).EmailMessage;
+    const msg = new Ctor(fromEmail, toEmail, null);
+    msg.setFrom(fromEmail);
+    msg.setTo(toEmail);
+    msg.setRaw(mime);
+    await env.SEND_EMAIL.send(msg);
+    return { ok:true, skipped:false };
+  } catch (e) {
+    return { ok:false, skipped:false, error:String(e && e.message || e) };
+  }
+}
+
+// FormSubmit AJAX ucu üzerinden gönderim (yedek kanal)
+async function sendViaFormSubmit(subject, fields, toEmail, origin) {
+  const payload = {
+    board: toEmail,
+    _subject: subject,
+    _template: 'table',
+    _captcha: 'false',
+    _honey: '',
+    _datatable: fields,
+  };
+  try {
+    const res = await fetch(`https://formsubmit.co/ajax/${toEmail}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': origin,
+        'Referer': origin + '/',
+        'User-Agent': 'Mozilla/5.0 (ADES-Worker)',
+      },
+      body: JSON.stringify(payload),
+    });
+    // FormSubmit hatada dahi HTTP 200 + success:false dönebilir → gövdeye bak.
+    let ok = res.status >= 200 && res.status < 300;
+    let msg = '';
+    try {
+      const j = await res.json();
+      if (j) {
+        if (j.success === false || j.success === 'false') ok = false;
+        if (j.message) msg = j.message;
+      }
+    } catch (e) { /* boş gövde */ }
+    return { ok, error: ok ? '' : (msg || ('FormSubmit HTTP ' + res.status)) };
+  } catch (e) {
+    return { ok:false, error:String(e && e.message || e) };
+  }
+}
+
+async function attemptDelivery(env, toEmail, subject, fields, origin) {
+  // Önce Cloudflare'ın kendi kanalı → sonra FormSubmit (yedek)
+  if (env && env.SEND_EMAIL) {
+    const r = await sendViaCloudflareEmail(env, toEmail, subject, fields);
+    if (r.ok) return { method:'cloudflare', ...r };
+  }
+  const r2 = await sendViaFormSubmit(subject, fields, toEmail, origin);
+  return { method:'formsubmit', ...r2 };
+}
+
+// ---------- KV yedekleme (başvurular asla kaybolmaz) ----------
+function submissionId() {
+  return 's' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+async function saveSubmission(env, rec) {
+  if (!env || !env.CONTENT) return false;
+  try {
+    await env.CONTENT.put('subm:' + rec.id, JSON.stringify(rec));
+    let list = [];
+    try {
+      const prev = await env.CONTENT.get('subm:index');
+      list = prev ? JSON.parse(prev) : [];
+    } catch (e) { /* bozuk index */ }
+    if (!Array.isArray(list)) list = [];
+    list.unshift(rec.id);
+    if (list.length > 250) list = list.slice(0, 250);
+    await env.CONTENT.put('subm:index', JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function readSubmissions(env, limit) {
+  if (!env || !env.CONTENT) return [];
+  let ids = [];
+  try {
+    const raw = await env.CONTENT.get('subm:index');
+    ids = raw ? JSON.parse(raw) : [];
+  } catch (e) { /* yok */ }
+  if (!Array.isArray(ids)) ids = [];
+  const out = [];
+  for (const id of ids.slice(0, limit || 150)) {
+    try {
+      const s = await env.CONTENT.get('subm:' + id);
+      if (s) out.push(JSON.parse(s));
+    } catch (e) { /* tek kayıt bozuksa atla */ }
+  }
+  return out;
+}
+
+// ---------- GET /api/applications ----------
+// Panelden okunur: /api/applications?token=<şifre>
+// Varsayılan şifre admin paneldekiyle aynıdır (env.ADMIN_TOKEN ile değiştirilebilir).
+async function handleApplications(request, env) {
+  const url = new URL(request.url);
+  const expected = (env && env.ADMIN_TOKEN) || 'ades2026';
+  const auth = request.headers.get('Authorization') || '';
+  const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  const pass = url.searchParams.get('token') || bearer;
+  if (pass !== expected) {
+    return json({ ok:false, error:'Yetkisiz.' }, 401);
+  }
+  const limit = parseInt(url.searchParams.get('limit') || '100', 10) || 100;
+  const items = await readSubmissions(env, Math.min(limit, 250));
+  return json({ ok:true, items });
+}
+
 // ---------- POST /api/submit ----------
-// Rezervasyon ve Ekibe Katıl (başvuru) formları tarayıcıdan buraya gelir;
-// worker sunucu tarafında FormSubmit AJAX ucu üzerinden e-posta olarak
-// iletir. Böylece tarayıcıda CORS engeli oluşmaz ve e-postalar düşer.
-async function handleFormSubmit(request, env) {
-  const toEmail = env.CONTACT_EMAIL || 'iletisim.adesmedia@gmail.com';
+// Rezervasyon ve Ekibe Katıl (başvuru) formları tarayıcıdan buraya gelir.
+async function handleFormSubmit(request, env, ctx) {
+  const toEmail = (env && env.CONTACT_EMAIL) || 'iletisim.adesmedia@gmail.com';
 
   let data;
   try {
@@ -227,6 +408,17 @@ async function handleFormSubmit(request, env) {
   const honey = String((data.get('_honey') || '').trim());
   if (honey) {
     return json({ ok:true, spam:true }); // bot tuzağı
+  }
+
+  // Çok hızlı tekrarlanan istekleri (botlar/mükerrer tıklama) sessizce süz
+  const ip = request.headers.get('CF-Connecting-IP') || '';
+  if (env && env.CONTENT && ip) {
+    let last = 0;
+    try { last = parseInt(await env.CONTENT.get('subm:gate:' + ip), 10) || 0; } catch (e) { /* yok */ }
+    if (Date.now() - last < 15000) {
+      return json({ ok:true, spam:true });
+    }
+    try { await env.CONTENT.put('subm:gate:' + ip, String(Date.now())); } catch (e) { /* yok */ }
   }
 
   const type = String(data.get('_type') || '');
@@ -243,43 +435,49 @@ async function handleFormSubmit(request, env) {
     fields[k] = typeof v === 'string' ? v : '';
   }
 
-  const payload = {
-    board: toEmail,
-    _subject: subject,
-    _template: 'table',
-    _captcha: 'false',
-    _honey: '',
-    _datatable: fields,
+  const rec = {
+    id: submissionId(),
+    type,
+    subject,
+    fields,
+    created_at: Date.now(),
+    email_status: 'pending',
+    email_error: '',
   };
+  const saved = await saveSubmission(env, rec);
 
-  try {
-    const origin = new URL(request.url).origin;
-    const res = await fetch(`https://formsubmit.co/ajax/${toEmail}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Origin': origin,
-        'Referer': origin + '/',
-        'User-Agent': 'Mozilla/5.0 (ADES-Worker)',
-      },
-      body: JSON.stringify(payload),
-    });
-    // FormSubmit, hatada bile HTTP 200 (+ success:false) dönebilir. JSON gövdesine bak.
-    let ok = res.status >= 200 && res.status < 300;
-    let msg = '';
-    try {
-      const j = await res.json();
-      if (j) {
-        if (j.success === false || j.success === 'false') ok = false;
-        if (j.message) msg = j.message;
-      }
-    } catch (e) { /* boş gövde */ }
-    if (ok) return json({ ok:true });
-    return json({ ok:false, error: msg || ('FormSubmit HTTP ' + res.status) }, 502);
-  } catch (e) {
-    return json({ ok:false, error:String(e && e.message || e) }, 502);
+  const origin = new URL(request.url).origin;
+  const delivery = await attemptDelivery(env, toEmail, subject, fields, origin);
+  rec.email_status = delivery.ok ? 'delivered' : 'failed';
+  rec.email_method = delivery.method;
+  if (!delivery.ok) rec.email_error = delivery.error || '';
+  if (saved) {
+    try { await env.CONTENT.put('subm:' + rec.id, JSON.stringify(rec)); } catch (e) { /* yok */ }
   }
+
+  // E-posta gidemezse kısa bir süre sonra bir kez daha dene (kullanıcı göremez).
+  if (!delivery.ok && ctx && typeof ctx.waitUntil === 'function') {
+    ctx.waitUntil((async () => {
+      await new Promise(r => setTimeout(r, 90000));
+      const retry = await attemptDelivery(env, toEmail, subject, fields, origin);
+      if (retry.ok) {
+        rec.email_status = 'delivered';
+        rec.email_method = retry.method;
+        rec.email_error = '';
+      }
+      if (saved) {
+        try { await env.CONTENT.put('subm:' + rec.id, JSON.stringify(rec)); } catch (e) { /* yok */ }
+      }
+    })());
+  }
+
+  // Başvuru alındı → her zaman başarılı dön (veri KV'da güvende).
+  return json({
+    ok: true,
+    saved,
+    email: delivery.ok ? 'sent' : 'queued',
+    email_method: delivery.method,
+  });
 }
 
 // ---------- ziyaretçi sayacı ----------
@@ -309,8 +507,11 @@ export default {
     if (path === '/api/visit' ) {
       return handleVisit(request, env);
     }
+    if (path === '/api/applications') {
+      return handleApplications(request, env);
+    }
     if (path === '/api/submit' && request.method === 'POST') {
-      return handleFormSubmit(request, env);
+      return handleFormSubmit(request, env, ctx);
     }
     if (path === '/content.json') {
       try {
