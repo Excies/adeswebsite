@@ -766,22 +766,56 @@
   .work-body{padding:26px 28px 30px;}
   .work-hint{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:14px;}
   .work-subs{display:flex;flex-direction:column;gap:10px;}
-  /* sonsuz seviye alt başlık ağacı */
+  /* sonsuz seviye alt başlık ağacı — başlıklar KAPALI gelir, tıklayınca aşağı açılır */
   .work-tree{display:flex;flex-direction:column;gap:10px;}
   .work-tree-nested{
-    margin-top:10px;padding-left:20px;
+    margin-top:0;padding-left:20px;
     border-left:1px solid rgba(47,232,138,.22);
   }
   .work-node{display:flex;flex-direction:column;}
+  .work-row{display:flex;gap:10px;align-items:stretch;}
+  .work-row > .is-group{flex:1;min-width:0;}
+  .work-sub-open{
+    align-self:center;flex:0 0 auto;display:inline-flex;align-items:center;
+    padding:12px 16px;border:1px solid var(--line-strong);border-radius:3px;
+    background:rgba(238,247,240,.04);color:var(--gold);
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    text-decoration:none;white-space:nowrap;transition:all .25s ease;
+  }
+  .work-sub-open:hover{background:var(--gold);color:var(--gold-deep);border-color:var(--gold);}
+  /* kapalı → açık durumu */
+  .work-node > .work-tree-nested{
+    display:none;
+    overflow:hidden;
+  }
+  .work-node.open > .work-tree-nested{
+    display:flex;
+    margin-top:10px;
+    animation:workDown .32s cubic-bezier(.16,.84,.44,1) both;
+  }
+  @keyframes workDown{
+    0%{opacity:0;transform:translateY(-10px);}
+    100%{opacity:1;transform:translateY(0);}
+  }
+  /* aç/kapa oku */
+  .work-caret{
+    width:9px;height:9px;flex:0 0 auto;margin-right:4px;
+    border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);
+    transform:rotate(-45deg);transition:transform .3s ease;
+  }
+  .work-sub[aria-expanded="true"] .work-caret{transform:rotate(45deg);}
   .work-sub.is-group{
-    cursor:default;background:rgba(238,247,240,.045);
-    border-style:solid;border-color:var(--line);
+    cursor:pointer;background:rgba(238,247,240,.045);text-align:left;width:100%;
+    font:inherit;color:inherit;appearance:none;
   }
   .work-sub.is-group .work-sub-go{color:var(--fg-dim);font-size:10.5px;letter-spacing:.1em;}
-  .work-sub.is-group:hover{border-color:var(--line);transform:none;box-shadow:none;}
+  .work-sub.is-group:hover{border-color:var(--line-strong);transform:none;box-shadow:none;background:rgba(238,247,240,.07);}
+  .work-sub.is-group[aria-expanded="true"]{border-color:var(--gold);}
+  .work-sub.is-group[aria-expanded="true"] .work-sub-go{color:var(--gold);}
   @media(max-width:640px){
     .work-tree-nested{padding-left:12px;}
     .work-sub-title{font-size:17px;}
+    .work-caret{display:none;}
   }
   .work-sub{
     display:flex;align-items:center;gap:16px;padding:16px 20px;
@@ -2350,23 +2384,35 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       return s && typeof s === 'object' && (s.title || s.link || hasWorkSubs(s.subs));
     });
   }
+  // Alt başlık ağacı — alt başlığı olan her düğüm KAPALI başlar, tıklanınca
+  // alta doğru açılır. Linki olan yaprak (çocuğu olmayan) düğüm doğrudan linktir.
   function renderWorkTree(arr, level){
     const out = [];
     (arr||[]).forEach(function(s,i){
       const num = String(i+1).padStart(2,'0');
-      const kids = s.subs.length ? renderWorkTree(s.subs, level+1) : '';
-      const head = s.link
-        ? `<a class="work-sub" href="${workUrl(s.link)}" target="_blank" rel="noopener">
-             <span class="work-sub-num">${num}</span>
-             <span class="work-sub-title">${escapeHtml(s.title || ('Bölüm ' + (i+1)))}</span>
-             <span class="work-sub-go">Aç →</span>
-           </a>`
-        : `<div class="work-sub is-group">
-             <span class="work-sub-num">${num}</span>
-             <span class="work-sub-title">${escapeHtml(s.title || ('Bölüm ' + (i+1)))}</span>
-             <span class="work-sub-go">${s.subs.length} alt başlık</span>
-           </div>`;
-      out.push(`<div class="work-node">${head}${kids}</div>`);
+      const title = escapeHtml(s.title || ('Bölüm ' + (i+1)));
+      if(s.subs.length){
+        const kids = renderWorkTree(s.subs, level+1);
+        const grp = `<button type="button" class="work-sub is-group" aria-expanded="false">
+              <span class="work-caret" aria-hidden="true"></span>
+              <span class="work-sub-num">${num}</span>
+              <span class="work-sub-title">${title}</span>
+              <span class="work-sub-go">${s.subs.length} alt başlık</span>
+            </button>`;
+        const opener = s.link
+          ? `<a class="work-sub-open" href="${workUrl(s.link)}" target="_blank" rel="noopener">Aç →</a>`
+          : '';
+        out.push(`<div class="work-node">
+            <div class="work-row">${grp}${opener}</div>
+            ${kids}
+          </div>`);
+      }else{
+        out.push(`<div class="work-node"><a class="work-sub" href="${workUrl(s.link)}" target="_blank" rel="noopener">
+              <span class="work-sub-num">${num}</span>
+              <span class="work-sub-title">${title}</span>
+              <span class="work-sub-go">Aç →</span>
+            </a></div>`);
+      }
     });
     if(!out.length) return '';
     return `<div class="work-tree${level ? ' work-tree-nested' : ''}">${out.join('')}</div>`;
@@ -2388,6 +2434,15 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     const wb = document.getElementById('workBackdrop');
     if(wc) wc.addEventListener('click', closeWorkModal);
     if(wb) wb.addEventListener('click', closeWorkModal);
+    // Alt başlığı olan başlığa tıklanınca o dal açılır/kapanır (aşağı doğru)
+    if(workSubs) workSubs.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.is-group');
+      if(!btn) return;
+      const node = btn.closest('.work-node');
+      if(!node) return;
+      const open = node.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
     document.addEventListener('keydown', (e)=>{
       if(e.key === 'Escape' && workModal.classList.contains('open')) closeWorkModal();
     });
