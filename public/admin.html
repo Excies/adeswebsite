@@ -80,6 +80,7 @@
   .subs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
   .subs-head span{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
   .subs-hint{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:8px;}
+  .subs-nested{margin:8px 0 0 14px;padding-left:12px;border-left:2px solid var(--line2);}
   .subs-row{
     display:grid;grid-template-columns:26px 1fr 1.6fr auto;gap:8px;align-items:end;
     margin-top:12px;padding-bottom:12px;border-bottom:1px solid var(--line);
@@ -608,6 +609,13 @@
     subs.push({title:'', link:''});
     commit();
   }
+  // recursive: alt seviyeye ekle (base = path to array)
+  function addSubAt(pathArr){
+    var subs = getPath(pathArr);
+    if(!Array.isArray(subs)){ subs = []; setPath(pathArr, subs); }
+    subs.push({title:'', link:''});
+    commit();
+  }
   function moveSub(base, j, dir){
     var subs = subList(base) || [];
     var k = j + dir;
@@ -621,7 +629,7 @@
     commit();
   }
   function subEditor(idx){
-    var base = 'islerimiz.' + idx + '.subs';
+    var baseArr = 'islerimiz.' + idx + '.subs';
     var box = document.createElement('div');
     box.className = 'subs';
 
@@ -630,43 +638,55 @@
     var lb = document.createElement('span');
     lb.textContent = 'Alt Başlıklar (Gün 1, Gün 2 …)';
     head.appendChild(lb);
-    head.appendChild(actBtn('+ Alt Başlık Ekle', 'small primary', false, function(){ addSub(base); }));
+    head.appendChild(actBtn('+ Alt Başlık Ekle', 'small primary', false, function(){ addSub(baseArr); }));
     box.appendChild(head);
 
     var hint = document.createElement('div');
     hint.className = 'subs-hint';
-    hint.textContent = 'Sitede bu karta tıklanınca yeni bir ekran açılır ve buradaki başlıklar orada listelenir. Her başlığın kendi Drive / Google Fotoğraflar linki vardır. Alt başlık eklemezsen kart eski gibi doğrudan yukarıdaki tek linke gider.';
+    hint.textContent = 'Sitede bu karta tıklanınca yeni bir ekran açılır. Her satırın içinde tekrar "+ Alt Başlık Ekle" ile istediğin kadar bölebilirsin (Gün 1 → Coffee Breaks → ...).';
     box.appendChild(hint);
 
-    var subs = subList(base);
-    if(!Array.isArray(subs) || !subs.length){
-      var none = document.createElement('div');
-      none.className = 'subs-hint';
-      none.style.color = 'var(--dim)';
-      none.textContent = 'Henüz alt başlık yok.';
-      box.appendChild(none);
-      return box;
+    function renderTree(arrPath, level){
+      var arr = getPath(arrPath);
+      if(!Array.isArray(arr) || !arr.length){
+        if(level === 0){
+          var none = document.createElement('div');
+          none.className = 'subs-hint';
+          none.style.color = 'var(--dim)';
+          none.textContent = 'Henüz alt başlık yok.';
+          return none;
+        }
+        return document.createElement('div');
+      }
+      var wrap = document.createElement('div');
+      if(level > 0) wrap.className = 'subs-nested';
+      arr.forEach(function(s, j){
+        var row = document.createElement('div');
+        row.className = 'subs-row';
+        var num = document.createElement('span');
+        num.className = 'subs-num';
+        num.textContent = level === 0 ? String(j + 1) : '•';
+        row.appendChild(num);
+        row.appendChild(fieldRow('Başlık', arrPath + '.' + j + '.title', s.title, {placeholder: level === 0 ? 'Gün 1' : 'Alt başlık'}));
+        row.appendChild(fieldRow('Link (Drive / Google Fotoğraflar)', arrPath + '.' + j + '.link', s.link, {placeholder:'https://drive.google.com/…'}));
+        var acts = document.createElement('div');
+        acts.className = 'subs-acts';
+        acts.appendChild(actBtn('↑', 'small ghost', j === 0, function(){ moveSub(arrPath, j, -1); }));
+        acts.appendChild(actBtn('↓', 'small ghost', j === arr.length - 1, function(){ moveSub(arrPath, j, 1); }));
+        acts.appendChild(actBtn('+ Alt', 'small ghost', false, function(){ addSubAt(arrPath + '.' + j + '.subs'); commit(); }));
+        acts.appendChild(actBtn('Sil', 'small danger ghost', false, function(){
+          if(confirm('Bu satır ve tüm alt başlıkları silinsin mi?')){ delSub(arrPath, j); commit(); }
+        }));
+        row.appendChild(acts);
+        wrap.appendChild(row);
+        // recursive children
+        var childWrap = renderTree(arrPath + '.' + j + '.subs', level + 1);
+        if(childWrap && childWrap.childNodes && childWrap.childNodes.length){ wrap.appendChild(childWrap); }
+      });
+      return wrap;
     }
-
-    subs.forEach(function(s, j){
-      var row = document.createElement('div');
-      row.className = 'subs-row';
-      var num = document.createElement('span');
-      num.className = 'subs-num';
-      num.textContent = String(j + 1);
-      row.appendChild(num);
-      row.appendChild(fieldRow('Başlık', base + '.' + j + '.title', s.title, {placeholder:'Gün 1'}));
-      row.appendChild(fieldRow('Link (Drive / Google Fotoğraflar)', base + '.' + j + '.link', s.link, {placeholder:'https://drive.google.com/…'}));
-      var acts = document.createElement('div');
-      acts.className = 'subs-acts';
-      acts.appendChild(actBtn('↑', 'small ghost', j === 0, function(){ moveSub(base, j, -1); }));
-      acts.appendChild(actBtn('↓', 'small ghost', j === subs.length - 1, function(){ moveSub(base, j, 1); }));
-      acts.appendChild(actBtn('Sil', 'small danger ghost', false, function(){
-        if(confirm('Bu alt başlık silinsin mi?')) delSub(base, j);
-      }));
-      row.appendChild(acts);
-      box.appendChild(row);
-    });
+    var tree = renderTree(baseArr, 0);
+    box.appendChild(tree);
     return box;
   }
   function renderIslerimiz(){

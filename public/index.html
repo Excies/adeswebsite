@@ -766,6 +766,23 @@
   .work-body{padding:26px 28px 30px;}
   .work-hint{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:14px;}
   .work-subs{display:flex;flex-direction:column;gap:10px;}
+  /* sonsuz seviye alt başlık ağacı */
+  .work-tree{display:flex;flex-direction:column;gap:10px;}
+  .work-tree-nested{
+    margin-top:10px;padding-left:20px;
+    border-left:1px solid rgba(47,232,138,.22);
+  }
+  .work-node{display:flex;flex-direction:column;}
+  .work-sub.is-group{
+    cursor:default;background:rgba(238,247,240,.045);
+    border-style:solid;border-color:var(--line);
+  }
+  .work-sub.is-group .work-sub-go{color:var(--fg-dim);font-size:10.5px;letter-spacing:.1em;}
+  .work-sub.is-group:hover{border-color:var(--line);transform:none;box-shadow:none;}
+  @media(max-width:640px){
+    .work-tree-nested{padding-left:12px;}
+    .work-sub-title{font-size:17px;}
+  }
   .work-sub{
     display:flex;align-items:center;gap:16px;padding:16px 20px;
     border:1px solid var(--line-strong);border-radius:3px;background:var(--bg-alt);
@@ -2317,20 +2334,53 @@ document.querySelectorAll(".glitch-text").forEach(el => {
   function closeWorkModal(){
     if(workModal) workModal.classList.remove('open');
   }
+  // Alt başlık ağacını güvenli hale getirir: eksik/bozuk satırları atar,
+  // her düğümde {title, link, subs} üçlüsü garantiler (sonsuz seviye).
+  function cleanWorkSubs(arr){
+    return (Array.isArray(arr) ? arr : [])
+      .filter(s=>s && typeof s === 'object' && (s.title || s.link || (Array.isArray(s.subs) && s.subs.length)))
+      .map(s=>({ title:String(s.title||''), link:String(s.link||''), subs:cleanWorkSubs(s.subs) }));
+  }
+  function countWorkNodes(arr){
+    return (arr||[]).reduce(function(n,s){ return n + 1 + countWorkNodes(s.subs); }, 0);
+  }
+  // Kartta alt başlık var mı? (ağacın herhangi bir derinliğinde)
+  function hasWorkSubs(arr){
+    return (Array.isArray(arr) ? arr : []).some(function(s){
+      return s && typeof s === 'object' && (s.title || s.link || hasWorkSubs(s.subs));
+    });
+  }
+  function renderWorkTree(arr, level){
+    const out = [];
+    (arr||[]).forEach(function(s,i){
+      const num = String(i+1).padStart(2,'0');
+      const kids = s.subs.length ? renderWorkTree(s.subs, level+1) : '';
+      const head = s.link
+        ? `<a class="work-sub" href="${workUrl(s.link)}" target="_blank" rel="noopener">
+             <span class="work-sub-num">${num}</span>
+             <span class="work-sub-title">${escapeHtml(s.title || ('Bölüm ' + (i+1)))}</span>
+             <span class="work-sub-go">Aç →</span>
+           </a>`
+        : `<div class="work-sub is-group">
+             <span class="work-sub-num">${num}</span>
+             <span class="work-sub-title">${escapeHtml(s.title || ('Bölüm ' + (i+1)))}</span>
+             <span class="work-sub-go">${s.subs.length} alt başlık</span>
+           </div>`;
+      out.push(`<div class="work-node">${head}${kids}</div>`);
+    });
+    if(!out.length) return '';
+    return `<div class="work-tree${level ? ' work-tree-nested' : ''}">${out.join('')}</div>`;
+  }
   function openWorkModal(w){
     if(!workModal) return;
-    const subs = (Array.isArray(w && w.subs) ? w.subs : []).filter(s=>s && (s.title || s.link));
+    const subs = cleanWorkSubs(w && w.subs);
+    const total = countWorkNodes(subs);
     workTitle.textContent = (w && w.title) || '';
-    workTag.textContent = subs.length ? (subs.length + ' bölüm') : 'Galeri';
-    workHint.textContent = subs.length ? 'Bir bölüm seç, fotoğraflar yeni sekmede açılır' : '';
+    workTag.textContent = total ? (total + ' bölüm') : 'Galeri';
+    workHint.textContent = total ? 'Bir bölüm seç, fotoğraflar yeni sekmede açılır' : '';
     if(w && w.image){ workHead.style.display = ''; workImg.src = escapeHtml(w.image); workImg.alt = w.title || ''; }
     else workHead.style.display = 'none';
-    workSubs.innerHTML = subs.map((s,i)=>`
-      <a class="work-sub" href="${workUrl(s.link)}" target="_blank" rel="noopener">
-        <span class="work-sub-num">${String(i+1).padStart(2,'0')}</span>
-        <span class="work-sub-title">${escapeHtml(s.title || ('Bölüm ' + (i+1)))}</span>
-        <span class="work-sub-go">Aç →</span>
-      </a>`).join('') || '<p class="work-empty">Bu iş için henüz alt başlık eklenmemiş.</p>';
+    workSubs.innerHTML = renderWorkTree(subs, 0) || '<p class="work-empty">Bu iş için henüz alt başlık eklenmemiş.</p>';
     workModal.classList.add('open');
   }
   if(workModal){
@@ -2622,7 +2672,7 @@ document.querySelectorAll(".glitch-text").forEach(el => {
       // Alt başlığı (Gün 1 / Gün 2 ...) olan kart → tıklayınca ekran açılır.
       // Alt başlığı olmayan kart → eski davranış korunur, doğrudan linke gider.
       islerimizGrid.innerHTML = data.islerimiz.map((w,i)=>{
-        const subs = Array.isArray(w.subs) ? w.subs.filter(s=>s && (s.title||s.link)) : [];
+        const subs = hasWorkSubs(w && w.subs) ? cleanWorkSubs(w.subs) : [];
         const cover = `
           <div class="islerimiz-cover">
             ${subs.length ? `<span class="islerimiz-badge">${subs.length} Gün</span>` : ''}
