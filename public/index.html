@@ -725,6 +725,62 @@
   .islerimiz-link{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);}
   .islerimiz-link span{transition:transform .3s ease;}
   .islerimiz-card:hover .islerimiz-link span{transform:translateX(5px);}
+  /* alt başlıklı (Gün 1 / Gün 2 ...) kartlar → tıklanınca yeni ekran açılır */
+  button.islerimiz-card{width:100%;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;appearance:none;}
+  .islerimiz-badge{
+    position:absolute;top:16px;left:16px;z-index:2;display:inline-flex;align-items:center;gap:7px;
+    background:rgba(10,10,12,.78);border:1px solid var(--line-strong);border-radius:20px;
+    padding:7px 13px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--gold);backdrop-filter:blur(6px);
+  }
+  /* ---------- işlerimiz alt başlık ekranı (Gün 1 / Gün 2 ...) ---------- */
+  .work-modal{
+    position:fixed;inset:0;z-index:2150;display:none;align-items:center;justify-content:center;
+    padding:20px;background:rgba(5,10,7,.9);backdrop-filter:blur(12px);
+  }
+  .work-modal.open{display:flex;}
+  .work-backdrop{position:absolute;inset:0;}
+  .work-modal.open .work-panel{animation:workIn .45s cubic-bezier(.16,.84,.44,1) both;}
+  .work-modal.open .work-backdrop{animation:quoteFade .35s ease both;}
+  @keyframes workIn{
+    0%{opacity:0;transform:translateY(30px) scale(.96);filter:blur(6px);}
+    100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+  }
+  .work-panel{
+    position:relative;width:min(720px,100%);max-height:88vh;overflow:auto;
+    background:var(--panel);border:1px solid var(--line-strong);border-radius:4px;
+    box-shadow:0 40px 100px -40px rgba(0,0,0,.9);
+  }
+  .work-panel-head{position:relative;height:190px;overflow:hidden;border-bottom:1px solid var(--line);}
+  .work-panel-head img{width:100%;height:100%;object-fit:cover;filter:grayscale(35%);}
+  .work-panel-head::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,10,8,.25) 0%,rgba(6,10,8,.9) 100%);}
+  .work-head-text{position:absolute;left:0;right:0;bottom:0;padding:24px 28px;z-index:2;}
+  .work-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+  .work-title{font-family:var(--display);font-size:clamp(28px,4.4vw,42px);line-height:1.05;margin:0;color:var(--fg);}
+  .work-close{
+    position:absolute;top:14px;right:16px;z-index:3;background:rgba(10,10,12,.7);border:1px solid var(--line-strong);
+    color:var(--fg);width:38px;height:38px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:all .25s ease;
+  }
+  .work-close:hover{background:var(--gold);color:var(--gold-deep);transform:rotate(90deg);}
+  .work-body{padding:26px 28px 30px;}
+  .work-hint{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:14px;}
+  .work-subs{display:flex;flex-direction:column;gap:10px;}
+  .work-sub{
+    display:flex;align-items:center;gap:16px;padding:16px 20px;
+    border:1px solid var(--line-strong);border-radius:3px;background:var(--bg-alt);
+    text-decoration:none;transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease;
+  }
+  .work-sub-num{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--gold);
+    border:1px solid var(--line-strong);border-radius:50%;width:34px;height:34px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .work-sub-title{font-family:var(--display);font-size:21px;letter-spacing:.01em;line-height:1.2;margin-right:auto;word-break:break-word;}
+  .work-sub-go{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);transition:transform .3s ease;}
+  .work-sub:hover{border-color:var(--gold);transform:translateX(6px);box-shadow:0 8px 30px -12px rgba(47,232,138,.4);}
+  .work-sub:hover .work-sub-go{transform:translateX(4px);}
+  .work-empty{font-size:14px;color:var(--fg-dim);line-height:1.7;}
 
   /* ---------- click flash burst ---------- */
   .flash-burst{
@@ -1447,6 +1503,25 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     <figcaption id="lightboxCap"></figcaption>
   </figure>
   <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Sonraki">›</button>
+</div>
+
+<!-- İŞLERİMİZ — alt başlık ekranı (MUNIYF → Gün 1, Gün 2 ...) -->
+<div class="work-modal" id="workModal" role="dialog" aria-modal="true" aria-labelledby="workModalTitle">
+  <div class="work-backdrop" id="workBackdrop"></div>
+  <div class="work-panel">
+    <button class="work-close" id="workClose" aria-label="Kapat">×</button>
+    <div class="work-panel-head" id="workHead">
+      <img id="workImg" src="" alt="">
+      <div class="work-head-text">
+        <div class="work-tag" id="workTag">Galeri</div>
+        <h3 class="work-title" id="workModalTitle"></h3>
+      </div>
+    </div>
+    <div class="work-body">
+      <div class="work-hint" id="workHint">Alt başlıklar</div>
+      <div class="work-subs" id="workSubs"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ================================================================
@@ -2222,6 +2297,52 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     lightbox.classList.add('open');
   });
 
+  // ---------- İŞLERİMİZ: alt başlık ekranı (MUNIYF → Gün 1, Gün 2 ...) ----------
+  const workModal  = document.getElementById('workModal');
+  const workImg    = document.getElementById('workImg');
+  const workTitle  = document.getElementById('workModalTitle');
+  const workTag    = document.getElementById('workTag');
+  const workHint   = document.getElementById('workHint');
+  const workSubs   = document.getElementById('workSubs');
+  const workHead   = document.getElementById('workHead');
+
+  // Link güvenliği: yalnızca http(s) / site içi yol. "photos.app.goo.gl/xxx" gibi
+  // protokolsüz yazılanları otomatik https'e tamamlar.
+  function workUrl(u){
+    const s = String(u==null?'':u).trim();
+    if(!s) return '#';
+    if(/^(https?:)?\/\//i.test(s) || s.charAt(0)==='/') return escapeHtml(s);
+    return 'https://' + escapeHtml(s);
+  }
+  function closeWorkModal(){
+    if(workModal) workModal.classList.remove('open');
+  }
+  function openWorkModal(w){
+    if(!workModal) return;
+    const subs = (Array.isArray(w && w.subs) ? w.subs : []).filter(s=>s && (s.title || s.link));
+    workTitle.textContent = (w && w.title) || '';
+    workTag.textContent = subs.length ? (subs.length + ' bölüm') : 'Galeri';
+    workHint.textContent = subs.length ? 'Bir bölüm seç, fotoğraflar yeni sekmede açılır' : '';
+    if(w && w.image){ workHead.style.display = ''; workImg.src = escapeHtml(w.image); workImg.alt = w.title || ''; }
+    else workHead.style.display = 'none';
+    workSubs.innerHTML = subs.map((s,i)=>`
+      <a class="work-sub" href="${workUrl(s.link)}" target="_blank" rel="noopener">
+        <span class="work-sub-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="work-sub-title">${escapeHtml(s.title || ('Bölüm ' + (i+1)))}</span>
+        <span class="work-sub-go">Aç →</span>
+      </a>`).join('') || '<p class="work-empty">Bu iş için henüz alt başlık eklenmemiş.</p>';
+    workModal.classList.add('open');
+  }
+  if(workModal){
+    const wc = document.getElementById('workClose');
+    const wb = document.getElementById('workBackdrop');
+    if(wc) wc.addEventListener('click', closeWorkModal);
+    if(wb) wb.addEventListener('click', closeWorkModal);
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && workModal.classList.contains('open')) closeWorkModal();
+    });
+  }
+
   // ---------- panelden gelen dinamik içerik (galeri, ekip, referanslar, partnerler) ----------
   // ======================================================================
   // ÖRNEK / YEDEK İÇERİK — /admin panelin henüz kurulmadıysa veya
@@ -2498,16 +2619,28 @@ document.querySelectorAll(".glitch-text").forEach(el => {
     // İŞLERİMİZ (admin panelden yönetiliyor)
     const islerimizGrid = document.getElementById('islerimizGrid');
     if(islerimizGrid && Array.isArray(data.islerimiz)){
-      islerimizGrid.innerHTML = data.islerimiz.map(w=>`
-        <a class="islerimiz-card" href="${escapeHtml(w.link||'#')}" target="_blank" rel="noopener">
+      // Alt başlığı (Gün 1 / Gün 2 ...) olan kart → tıklayınca ekran açılır.
+      // Alt başlığı olmayan kart → eski davranış korunur, doğrudan linke gider.
+      islerimizGrid.innerHTML = data.islerimiz.map((w,i)=>{
+        const subs = Array.isArray(w.subs) ? w.subs.filter(s=>s && (s.title||s.link)) : [];
+        const cover = `
           <div class="islerimiz-cover">
+            ${subs.length ? `<span class="islerimiz-badge">${subs.length} Gün</span>` : ''}
             <img loading="lazy" src="${escapeHtml(w.image||'')}" alt="${escapeHtml(w.title||'')}">
           </div>
           <div class="islerimiz-info">
             <h3>${escapeHtml(w.title||'')}</h3>
-            <span class="islerimiz-link">Galeriyi Aç <span>→</span></span>
-          </div>
-        </a>`).join('');
+            <span class="islerimiz-link">${subs.length ? 'Günleri Gör' : 'Galeriyi Aç'} <span>→</span></span>
+          </div>`;
+        if(subs.length){
+          return `<button type="button" class="islerimiz-card" data-work="${i}">${cover}</button>`;
+        }
+        return `<a class="islerimiz-card" href="${escapeHtml(w.link||'#')}" target="_blank" rel="noopener">${cover}</a>`;
+      }).join('');
+
+      islerimizGrid.querySelectorAll('[data-work]').forEach(btn=>{
+        btn.addEventListener('click', ()=>openWorkModal(data.islerimiz[Number(btn.dataset.work)] || {}));
+      });
     }
 
     // INSTAGRAM PROFİL EMBEDİ — kullanıcı adını struct üzerinden güncelle

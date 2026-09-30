@@ -75,6 +75,20 @@
   .item .formgrid{grid-template-columns:1fr 1fr;}
   .add-bar{display:flex;justify-content:center;margin:6px 0 20px;}
 
+  /* işlerimiz — alt başlıklar (Gün 1, Gün 2 ...) */
+  .subs{margin-top:14px;padding:14px;border:1px dashed var(--line2);border-radius:8px;background:rgba(47,232,138,.035);}
+  .subs-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .subs-head span{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);}
+  .subs-hint{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:8px;}
+  .subs-row{
+    display:grid;grid-template-columns:26px 1fr 1.6fr auto;gap:8px;align-items:end;
+    margin-top:12px;padding-bottom:12px;border-bottom:1px solid var(--line);
+  }
+  .subs-row:last-of-type{border-bottom:none;padding-bottom:0;}
+  .subs-row label{margin-bottom:3px;}
+  .subs-num{font-family:var(--mono);font-size:12px;color:var(--dim);text-align:center;padding-bottom:9px;}
+  .subs-acts{display:flex;gap:5px;padding-bottom:1px;}
+
   .imgfield{display:flex;gap:10px;align-items:flex-start;}
   .imgfield .main{flex:1;display:flex;flex-direction:column;gap:6px;}
   .imgfield .main .url-row{display:flex;gap:6px;}
@@ -104,7 +118,11 @@
   .savebar .inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
   .savebar .hint{font-size:11.5px;color:var(--dim);line-height:1.5;}
 
-  @media(max-width:720px){ .formgrid,.row,.item .formgrid{grid-template-columns:1fr;} }
+  @media(max-width:720px){
+    .formgrid,.row,.item .formgrid{grid-template-columns:1fr;}
+    .subs-row{grid-template-columns:1fr;}
+    .subs-num{text-align:left;padding-bottom:0;}
+  }
 </style>
 </head>
 <body>
@@ -190,7 +208,7 @@
 
     <section class="pane" data-pane="islerimiz">
       <h2>İşlerimiz</h2>
-      <p class="desc">Sitedeki "İşlerimiz" portföy bölümü. Her kart kapak görseli + başlık + galeri linki (Google Drive / Google Fotoğraflar) içerir. Kartlar yeni sekmede dış linke gider.</p>
+      <p class="desc">Sitedeki "İşlerimiz" portföy bölümü. Her kart: kapak görseli + ana başlık (örn. <b>MUNIYF</b>) + alt başlıklar. Alt başlık eklersen (örn. Gün 1, Gün 2) kart, siteye tıklanınca açılan yeni ekranda o başlıkları listeler ve her biri kendi Google Drive / Google Fotoğraflar linkine gider. Alt başlık eklemezsen kart, "Tek Galeri Linki" alanındaki tek linke gider.</p>
       <div class="card" id="islerimizCard"></div>
       <div class="add-bar"><button class="primary" id="islerimizAdd">+ İş Ekle</button></div>
     </section>
@@ -574,14 +592,97 @@
       function(it){ return it.title || 'Yeni haber'; });
   }
 
+  // -- İşlerimiz: kart + alt başlıklar (Gün 1, Gün 2 ...) --
+  function actBtn(txt, cls, disabled, fn){
+    var b = document.createElement('button');
+    b.className = cls;
+    b.textContent = txt;
+    b.disabled = !!disabled;
+    b.onclick = fn;
+    return b;
+  }
+  function subList(base){ return getPath(base); }
+  function addSub(base){
+    var subs = subList(base);
+    if(!Array.isArray(subs)){ subs = []; setPath(base, subs); }
+    subs.push({title:'', link:''});
+    commit();
+  }
+  function moveSub(base, j, dir){
+    var subs = subList(base) || [];
+    var k = j + dir;
+    if(k < 0 || k >= subs.length) return;
+    var t = subs[j]; subs[j] = subs[k]; subs[k] = t;
+    commit();
+  }
+  function delSub(base, j){
+    var subs = subList(base) || [];
+    subs.splice(j, 1);
+    commit();
+  }
+  function subEditor(idx){
+    var base = 'islerimiz.' + idx + '.subs';
+    var box = document.createElement('div');
+    box.className = 'subs';
+
+    var head = document.createElement('div');
+    head.className = 'subs-head';
+    var lb = document.createElement('span');
+    lb.textContent = 'Alt Başlıklar (Gün 1, Gün 2 …)';
+    head.appendChild(lb);
+    head.appendChild(actBtn('+ Alt Başlık Ekle', 'small primary', false, function(){ addSub(base); }));
+    box.appendChild(head);
+
+    var hint = document.createElement('div');
+    hint.className = 'subs-hint';
+    hint.textContent = 'Sitede bu karta tıklanınca yeni bir ekran açılır ve buradaki başlıklar orada listelenir. Her başlığın kendi Drive / Google Fotoğraflar linki vardır. Alt başlık eklemezsen kart eski gibi doğrudan yukarıdaki tek linke gider.';
+    box.appendChild(hint);
+
+    var subs = subList(base);
+    if(!Array.isArray(subs) || !subs.length){
+      var none = document.createElement('div');
+      none.className = 'subs-hint';
+      none.style.color = 'var(--dim)';
+      none.textContent = 'Henüz alt başlık yok.';
+      box.appendChild(none);
+      return box;
+    }
+
+    subs.forEach(function(s, j){
+      var row = document.createElement('div');
+      row.className = 'subs-row';
+      var num = document.createElement('span');
+      num.className = 'subs-num';
+      num.textContent = String(j + 1);
+      row.appendChild(num);
+      row.appendChild(fieldRow('Başlık', base + '.' + j + '.title', s.title, {placeholder:'Gün 1'}));
+      row.appendChild(fieldRow('Link (Drive / Google Fotoğraflar)', base + '.' + j + '.link', s.link, {placeholder:'https://drive.google.com/…'}));
+      var acts = document.createElement('div');
+      acts.className = 'subs-acts';
+      acts.appendChild(actBtn('↑', 'small ghost', j === 0, function(){ moveSub(base, j, -1); }));
+      acts.appendChild(actBtn('↓', 'small ghost', j === subs.length - 1, function(){ moveSub(base, j, 1); }));
+      acts.appendChild(actBtn('Sil', 'small danger ghost', false, function(){
+        if(confirm('Bu alt başlık silinsin mi?')) delSub(base, j);
+      }));
+      row.appendChild(acts);
+      box.appendChild(row);
+    });
+    return box;
+  }
   function renderIslerimiz(){
-    listItem($('islerimizCard'), 'islerimiz',
+    var card = $('islerimizCard');
+    listItem(card, 'islerimiz',
       [
         {key:'image',label:'Kapak Görseli',type:'image',full:true},
-        {key:'title',label:'Başlık'},
-        {key:'link',label:'Galeri Linki (Drive / Google Fotoğraflar)',full:true}
+        {key:'title',label:'Ana Başlık (örn. MUNIYF)'},
+        {key:'link',label:'Tek Galeri Linki (alt başlık eklemezsen bu kullanılır)',full:true}
       ],
-      function(it){ return it.title || 'Yeni iş'; });
+      function(it){
+        var n = (it.subs && it.subs.length) ? (' · ' + it.subs.length + ' alt başlık') : '';
+        return (it.title || 'Yeni iş') + n;
+      });
+    var rows = card.querySelectorAll('.item');
+    Array.prototype.forEach.call(rows, function(el, idx){ el.appendChild(subEditor(idx)); });
   }
 
   function renderTeam(){
@@ -764,7 +865,7 @@
   $('galleryAdd').addEventListener('click', function(){ addItem('gallery', {image:'',title:'',meta:'',category:'',size:''}); toast('Galeriye boş görsel eklendi — bilgileri doldur.'); });
   $('igAdd').addEventListener('click', function(){ addItem('igfeed', {link:'',image:'',likes:'',comments:''}); toast('Kare eklendi — Instagram paylaşım linkini yapıştır.'); });
   $('blogAdd').addEventListener('click', function(){ addItem('blog', {image:'',tag:'',date:'',title:'',excerpt:'',link:'#'}); });
-  $('islerimizAdd').addEventListener('click', function(){ addItem('islerimiz', {image:'',title:'',link:''}); });
+  $('islerimizAdd').addEventListener('click', function(){ addItem('islerimiz', {image:'',title:'',link:'',subs:[]}); });
   $('teamAdd').addEventListener('click', function(){ addItem('team', {image:'',name:'',rank:'Üye',group:'Design&IT',role:'',instagram:''}); });
   $('testiAdd').addEventListener('click', function(){ addItem('testimonials', {quote:'',title:''}); });
   $('partnerAdd').addEventListener('click', function(){ addItem('partners', {name:''}); });
